@@ -31,14 +31,6 @@ class ModelConfig:
             "max_tokens": 8192,
             "description": "Balanced performance and cost"
         },
-        "claude-2": {
-            "tier": ModelTier.MID,
-            "provider": "anthropic",
-            "cost_per_1k_input": 0.008,
-            "cost_per_1k_output": 0.024,
-            "max_tokens": 100000,
-            "description": "Good for longer contexts"
-        },
         
         # High-capability models - for hard tasks
         "gpt-4-turbo": {
@@ -47,15 +39,7 @@ class ModelConfig:
             "cost_per_1k_input": 0.01,
             "cost_per_1k_output": 0.03,
             "max_tokens": 128000,
-            "description": "Latest and most capable"
-        },
-        "claude-3-opus": {
-            "tier": ModelTier.HIGH,
-            "provider": "anthropic",
-            "cost_per_1k_input": 0.015,
-            "cost_per_1k_output": 0.075,
-            "max_tokens": 200000,
-            "description": "Most powerful reasoning"
+            "description": "Latest and most capable OpenAI model"
         }
     }
     
