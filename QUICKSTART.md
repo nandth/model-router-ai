@@ -6,39 +6,33 @@ Get the Model Router AI service up and running in 5 minutes!
 
 - Python 3.8 or higher
 - pip package manager
-- (Optional) OpenAI API key
-- (Optional) Anthropic API key
-
-**Note**: The service can run without API keys for testing the routing logic, but actual LLM calls require valid API keys.
+- OpenAI API key (get from https://platform.openai.com/api-keys)
 
 ## Installation
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/nandth/model-router-ai.git
-   cd model-router-ai
-   ```
+### 1. Clone and Install
+```bash
+git clone https://github.com/nandth/model-router-ai.git
+cd model-router-ai
+pip install -r requirements.txt
+```
 
-2. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+### 2. Configure OpenAI API Key
+```bash
+cp .env.example .env
+```
 
-3. **Configure environment** (optional for testing)
-   ```bash
-   cp .env.example .env
-   ```
-   
-   Edit `.env` and add your API keys:
-   ```bash
-   OPENAI_API_KEY=sk-your-openai-key-here
-   ANTHROPIC_API_KEY=sk-ant-your-anthropic-key-here
-   MONTHLY_BUDGET_LIMIT=100.0
-   ```
+Edit `.env` and add your OpenAI API key:
+```bash
+OPENAI_API_KEY=sk-your-actual-key-here
+MONTHLY_BUDGET_LIMIT=100.0
+```
+
+**Don't have an API key?** You can still run the demo to see the routing logic in action!
 
 ## Running the Demo
 
-See the routing system in action without API keys:
+See the routing system in action (no API key required):
 
 ```bash
 python demo.py
@@ -46,11 +40,11 @@ python demo.py
 
 This demonstrates:
 - ✅ Difficulty estimation (easy/medium/hard)
-- ✅ Model selection (cheap/mid/high tier)
+- ✅ Model selection (GPT-3.5 / GPT-4 / GPT-4 Turbo)
 - ✅ Cost estimation
 - ✅ Escalation logic
 
-## Starting the Server
+## Starting the API Server
 
 ```bash
 python -m app.main
@@ -58,32 +52,43 @@ python -m app.main
 
 The API server will start at `http://localhost:8000`
 
+**Interactive Documentation:**
+- **Swagger UI**: http://localhost:8000/docs
+- **ReDoc**: http://localhost:8000/redoc
+
 ## Testing the API
 
-### Health Check
+### 1. Health Check
 ```bash
 curl http://localhost:8000/api/health
-# Response: {"status":"healthy"}
 ```
+**Response:** `{"status":"healthy"}`
 
-### Check Budget
+### 2. Check Budget Status
 ```bash
 curl http://localhost:8000/api/budget
-# Shows: monthly limit, spent, remaining, request count
 ```
+Shows: monthly limit, spent, remaining, request count
 
-### View Statistics
+### 3. View Statistics
 ```bash
 curl http://localhost:8000/api/stats
-# Shows: requests, costs, latency, success rates
 ```
+Shows: total requests, costs, latency, success rates
 
-### Route a Prompt (requires API keys)
+### 4. Route a Prompt (requires OpenAI API key)
 ```bash
 curl -X POST http://localhost:8000/api/prompt \
   -H "Content-Type: application/json" \
   -d '{"prompt": "What is Python?", "max_tokens": 100}'
 ```
+
+**Response includes:**
+- Selected model (gpt-3.5-turbo, gpt-4, or gpt-4-turbo)
+- Difficulty score and level
+- Token usage and cost
+- Latency in milliseconds
+- Whether escalation occurred
 
 ## Running Tests
 
@@ -91,88 +96,74 @@ curl -X POST http://localhost:8000/api/prompt \
 pytest tests/ -v
 ```
 
-All tests should pass (15/15).
-
-## Interactive API Documentation
-
-Once the server is running, visit:
-
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
-
-These provide interactive documentation where you can test all endpoints directly in your browser.
+All tests should pass, demonstrating the routing logic works correctly.
 
 ## What's Next?
 
-1. **Add API Keys**: Configure `.env` with your OpenAI/Anthropic keys to make real LLM calls
+1. **Explore the API**: Use the Swagger UI at http://localhost:8000/docs to interactively test all endpoints
 2. **Adjust Budget**: Set your monthly budget limit in `.env`
-3. **Explore the Code**: 
+3. **Understand the Code**: 
    - `app/services/difficulty_estimator.py` - How difficulty is calculated
    - `app/services/routing_policy.py` - How models are selected
-   - `app/services/llm_client.py` - How LLMs are called with retry logic
-4. **Customize**: Add new models, adjust difficulty thresholds, modify routing logic
+   - `app/services/llm_client.py` - How OpenAI is called with retry logic
+4. **Customize**: Adjust difficulty thresholds, modify routing logic, or add new features
 
-## Architecture Overview
+## How It Works
 
 ```
 ┌─────────────────┐
-│  API Request    │
-│  (POST /prompt) │
+│  Your Prompt    │
 └────────┬────────┘
          │
          ▼
 ┌─────────────────────────┐
-│  Difficulty Estimator   │
-│  - Analyze length       │
-│  - Check keywords       │
-│  - Assess structure     │
+│  Difficulty Estimator   │  Analyzes: length, keywords, structure
+│  Score: 0.0 - 1.0       │  Level: easy / medium / hard
 └────────┬────────────────┘
          │
          ▼
 ┌─────────────────────────┐
-│   Routing Policy        │
-│   - Select model tier   │
-│   - Check budget        │
-│   - Estimate cost       │
+│   Routing Policy        │  Selects model:
+│   - Easy → GPT-3.5      │  • gpt-3.5-turbo (cheap)
+│   - Medium → GPT-4      │  • gpt-4 (balanced)
+│   - Hard → GPT-4 Turbo  │  • gpt-4-turbo (powerful)
 └────────┬────────────────┘
          │
          ▼
 ┌─────────────────────────┐
-│    LLM Client           │
-│    - Call API           │
-│    - Retry on failure   │
-│    - Detect low conf.   │
+│    OpenAI Client        │  Features:
+│    - API call           │  • Auto-retry (up to 3x)
+│    - Retry on failure   │  • Exponential backoff
+│    - Check confidence   │  • Smart escalation
 └────────┬────────────────┘
          │
          ▼
 ┌─────────────────────────┐
-│  Escalation Logic       │
-│  (if needed)            │
-└────────┬────────────────┘
-         │
-         ▼
-┌─────────────────────────┐
-│  Database Logger        │
-│  - Track cost           │
-│  - Record latency       │
-│  - Update budget        │
+│  Response + Metadata    │  Returns:
+│  - Model used           │  • Generated text
+│  - Tokens & cost        │  • Performance metrics
+│  - Latency              │  • Cost tracking
 └─────────────────────────┘
 ```
 
-## Support
-
-For more detailed information, see:
-- **README.md** - Complete documentation
-- **USAGE.md** - Detailed usage examples
-- **demo.py** - Working demonstration
-
 ## Common Issues
 
+**Issue**: `ModuleNotFoundError: No module named 'anthropic'`
+- **Solution**: Update dependencies: `pip install -r requirements.txt`
+
 **Issue**: "OpenAI API key not configured"
-- **Solution**: Add `OPENAI_API_KEY` to `.env` file
+- **Solution**: Add `OPENAI_API_KEY` to `.env` file with a valid key from https://platform.openai.com/api-keys
 
 **Issue**: "Monthly budget limit exceeded"
 - **Solution**: Increase `MONTHLY_BUDGET_LIMIT` in `.env` or wait for next month
 
 **Issue**: "Failed after 3 retries"
-- **Solution**: Check API key validity, network connection, and API status
+- **Solution**: Check your OpenAI API key is valid, check network connection, and verify OpenAI API status
+
+## Pro Tips
+
+- **Test without API keys first**: Run `python demo.py` to understand the routing logic
+- **Monitor costs**: Use `GET /api/budget` to track spending in real-time
+- **Start small**: Set a low budget limit initially while testing
+- **Use interactive docs**: The Swagger UI at `/docs` makes testing easy
+- **Check logs**: The SQLite database stores all request history for analysis
