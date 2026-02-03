@@ -1,18 +1,14 @@
-"""Main FastAPI application."""
+"""Main FastAPI application for ChatGPT API."""
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.models.database import init_db
 from app.routers import api
-
-# Initialize database
-init_db()
 
 # Create FastAPI app
 app = FastAPI(
-    title="Model Router AI",
-    description="Backend service that routes text prompts to different LLM APIs based on difficulty and cost constraints",
-    version="1.0.0"
+    title="ChatGPT API",
+    description="Simple API to send prompts to ChatGPT",
+    version="2.0.0"
 )
 
 # Add CORS middleware
@@ -32,12 +28,12 @@ app.include_router(api.router, prefix="/api", tags=["api"])
 async def root():
     """Root endpoint."""
     return {
-        "name": "Model Router AI",
-        "version": "1.0.0",
+        "name": "ChatGPT API",
+        "version": "2.0.0",
+        "description": "Simple API to send prompts to ChatGPT",
+        "docs": "/docs",
         "endpoints": {
-            "route_prompt": "/api/prompt",
-            "budget_status": "/api/budget",
-            "statistics": "/api/stats",
+            "send_prompt": "/api/prompt",
             "health": "/api/health"
         }
     }

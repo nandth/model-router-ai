@@ -1,75 +1,60 @@
-"""API endpoints for the model router."""
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+"""Simple API endpoint for sending prompts to ChatGPT."""
+import logging
+from fastapi import APIRouter, HTTPException
 
-from app.models.database import get_db
-from app.routers.schemas import PromptRequest, PromptResponse, BudgetStatus, Statistics
-from app.services.router_service import RouterService
-from app.services.budget_service import BudgetService
+from app.routers.schemas import PromptRequest, PromptResponse
+from app.services.llm_client import LLMClient, LLMClientError
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
-router_service = RouterService()
-budget_service = BudgetService()
+
+# Initialize the LLM client once
+try:
+    llm_client = LLMClient()
+except LLMClientError as e:
+    logger.warning(f"Warning: {e}")
+    llm_client = None
 
 
 @router.post("/prompt", response_model=PromptResponse)
-async def route_prompt(request: PromptRequest, db: Session = Depends(get_db)):
+async def send_prompt(request: PromptRequest):
     """
-    Route a prompt to the appropriate LLM model.
+    Send a prompt to ChatGPT and get a response.
     
     This endpoint:
-    1. Estimates the difficulty of the prompt
-    2. Selects an appropriate model based on difficulty
-    3. Checks budget constraints
-    4. Calls the LLM API with retry logic
-    5. Escalates to stronger models if confidence is low
-    6. Tracks latency and cost
+    1. Takes a prompt and optional model/max_tokens
+    2. Sends it to OpenAI's ChatGPT API
+    3. Returns the response
     """
-    try:
-        result = router_service.route_prompt(request.prompt, db, request.max_tokens)
-        return PromptResponse(**result)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.get("/budget", response_model=BudgetStatus)
-async def get_budget_status(db: Session = Depends(get_db)):
-    """
-    Get current monthly budget status.
+    if llm_client is None:
+        raise HTTPException(
+            status_code=500, 
+            detail="OpenAI API key not configured. Please set OPENAI_API_KEY in .env file"
+        )
     
-    Returns information about:
-    - Monthly budget limit
-    - Total spent this month
-    - Remaining budget
-    - Percentage used
-    - Number of requests this month
-    """
     try:
-        status = budget_service.get_budget_status(db)
-        return BudgetStatus(**status)
-    except Exception as e:
+        response_text, tokens_used = llm_client.send_prompt(
+            prompt=request.prompt,
+            model=request.model,
+            max_tokens=request.max_tokens
+        )
+        
+        return PromptResponse(
+            response=response_text,
+            model=request.model,
+            tokens_used=tokens_used
+        )
+    except LLMClientError as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.get("/stats", response_model=Statistics)
-async def get_statistics(limit: int = 100, db: Session = Depends(get_db)):
-    """
-    Get usage statistics.
-    
-    Returns statistics about recent requests:
-    - Total/successful/failed requests
-    - Total cost and average latency
-    - Token usage
-    - Escalation rate
-    """
-    try:
-        stats = router_service.get_statistics(db, limit)
-        return Statistics(**stats)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 
 
 @router.get("/health")
 async def health_check():
     """Health check endpoint."""
-    return {"status": "healthy"}
+    api_key_status = "configured" if llm_client is not None else "not configured"
+    return {
+        "status": "healthy",
+        "openai_api_key": api_key_status
+    }
