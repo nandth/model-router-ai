@@ -58,7 +58,7 @@ class PromptFeatureExtractor:
         r"segfault",
         r"segmentation\s*fault",
         r"error\s*at\s*line",
-        r"at\s+[\w\.]+\([\w\.]+:\d+\)",  # Java-style stack trace
+        r"at\s+[\w\.]+\([\w\.]+:\d+\)",  # JVM-style stack trace (Java/Kotlin/Scala)
         r"file\s+\"[^\"]+\",\s*line\s+\d+",  # Python-style traceback
     ]
     

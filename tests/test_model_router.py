@@ -141,6 +141,24 @@ class TestSelfEvalParser:
         assert result.should_escalate == False
         assert result.parse_error == False
     
+    def test_parse_json_with_nested_structure(self):
+        """Test parsing JSON with nested objects in answer."""
+        response = '''{"answer": "Result: {\\\"key\\\": \\\"value\\\"}", "confidence": 0.85, "should_escalate": false, "reasons": ["has nested data"]}'''
+        result = SelfEvalParser.parse_response(response)
+        
+        assert "Result" in result.answer
+        assert result.confidence == 0.85
+        assert result.parse_error == False
+    
+    def test_parse_json_with_array_reasons(self):
+        """Test parsing JSON with array of reasons."""
+        response = '''{"answer": "Test", "confidence": 0.8, "should_escalate": true, "reasons": ["reason1", "reason2", "reason3"]}'''
+        result = SelfEvalParser.parse_response(response)
+        
+        assert result.answer == "Test"
+        assert len(result.reasons) == 3
+        assert result.parse_error == False
+    
     def test_parse_json_with_markdown_wrapper(self):
         """Test parsing JSON wrapped in markdown."""
         response = '''Here's my response:

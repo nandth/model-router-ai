@@ -18,6 +18,11 @@ except Exception as e:
     routing_executor = None
 
 
+def _map_route_mode(schema_mode: RouteMode) -> RouterRouteMode:
+    """Map schema RouteMode to service RouteMode."""
+    return RouterRouteMode.FORCE if schema_mode == RouteMode.FORCE else RouterRouteMode.AUTO
+
+
 @router.post("/prompt", response_model=PromptResponse)
 async def send_prompt(request: PromptRequest):
     """
@@ -41,8 +46,7 @@ async def send_prompt(request: PromptRequest):
         )
     
     try:
-        # Map schema RouteMode to service RouteMode
-        route_mode = RouterRouteMode.FORCE if request.route_mode == RouteMode.FORCE else RouterRouteMode.AUTO
+        route_mode = _map_route_mode(request.route_mode)
         
         # Execute routing pipeline
         result = routing_executor.execute(
@@ -104,8 +108,7 @@ async def analyze_prompt(request: PromptRequest):
     from app.services.model_router import ModelRouter
     from app.services.prompt_features import DifficultyScorer
     
-    # Map schema RouteMode to service RouteMode
-    route_mode = RouterRouteMode.FORCE if request.route_mode == RouteMode.FORCE else RouterRouteMode.AUTO
+    route_mode = _map_route_mode(request.route_mode)
     
     # Get routing decision without executing
     routing = ModelRouter.route(

@@ -160,6 +160,44 @@ class SelfEvalParser:
     CONFIDENCE_THRESHOLD = 0.75
     
     @classmethod
+    def _extract_json_from_text(cls, response_text: str) -> str:
+        """
+        Extract JSON object from response text.
+        
+        Handles cases where JSON may be wrapped in markdown or other text.
+        Uses a balanced brace matching approach for nested structures.
+        """
+        # First, try to find JSON starting with { and containing "answer"
+        text = response_text.strip()
+        
+        # Find the first { that might start our JSON
+        start_idx = text.find('{')
+        if start_idx == -1:
+            return text
+        
+        # Use balanced brace matching
+        depth = 0
+        end_idx = start_idx
+        for i in range(start_idx, len(text)):
+            if text[i] == '{':
+                depth += 1
+            elif text[i] == '}':
+                depth -= 1
+                if depth == 0:
+                    end_idx = i + 1
+                    break
+        
+        # Extract the potential JSON
+        potential_json = text[start_idx:end_idx]
+        
+        # Verify it contains "answer" key
+        if '"answer"' in potential_json:
+            return potential_json
+        
+        # Fallback to original text
+        return text
+    
+    @classmethod
     def parse_response(cls, response_text: str) -> SelfEvalResult:
         """
         Parse Stage A self-evaluation JSON response.
@@ -178,13 +216,8 @@ class SelfEvalParser:
             SelfEvalResult with parsed or default values
         """
         try:
-            # Try to extract JSON from response (may be wrapped in markdown)
-            json_match = re.search(r'\{[^{}]*"answer"[^{}]*\}', response_text, re.DOTALL)
-            if json_match:
-                json_str = json_match.group(0)
-            else:
-                # Try parsing entire response as JSON
-                json_str = response_text.strip()
+            # Extract JSON from response (may be wrapped in markdown or text)
+            json_str = cls._extract_json_from_text(response_text)
             
             data = json.loads(json_str)
             

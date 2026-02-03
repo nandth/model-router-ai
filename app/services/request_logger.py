@@ -93,6 +93,9 @@ class RequestLogger:
         """Build the log entry dictionary."""
         features = routing.features
         
+        # Compute escalation status explicitly
+        escalated = cls._compute_escalation_status(routing, final_tier)
+        
         # Build base entry
         entry = {
             "timestamp": datetime.utcnow().isoformat() + "Z",
@@ -120,7 +123,7 @@ class RequestLogger:
                 "initial_model": routing.initial_model,
                 "final_tier": (final_tier or routing.final_tier).value,
                 "final_model": final_model or routing.final_model,
-                "escalated": routing.escalated or (final_tier != routing.initial_tier if final_tier else False),
+                "escalated": escalated,
             },
             "tokens": {
                 "stage_a": tokens_stage_a,
@@ -145,6 +148,25 @@ class RequestLogger:
             entry["error"] = error
         
         return entry
+    
+    @classmethod
+    def _compute_escalation_status(
+        cls,
+        routing: RoutingDecision,
+        final_tier: Optional[ModelTier]
+    ) -> bool:
+        """
+        Compute whether escalation occurred.
+        
+        Returns True if:
+        - routing.escalated is True, OR
+        - final_tier is different from initial_tier
+        """
+        if routing.escalated:
+            return True
+        if final_tier is not None and final_tier != routing.initial_tier:
+            return True
+        return False
     
     @classmethod
     def _truncate_prompt(cls, prompt: str) -> str:
