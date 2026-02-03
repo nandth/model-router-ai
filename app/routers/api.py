@@ -1,16 +1,18 @@
 """Simple API endpoint for sending prompts to ChatGPT."""
+import logging
 from fastapi import APIRouter, HTTPException
 
 from app.routers.schemas import PromptRequest, PromptResponse
 from app.services.llm_client import LLMClient, LLMClientError
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 # Initialize the LLM client once
 try:
     llm_client = LLMClient()
 except LLMClientError as e:
-    print(f"Warning: {e}")
+    logger.warning(f"Warning: {e}")
     llm_client = None
 
 

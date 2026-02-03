@@ -1,8 +1,20 @@
 #!/bin/bash
+set -e
 
 echo "=========================================="
 echo "ChatGPT API - Test Script"
 echo "=========================================="
+echo ""
+
+# Check if server is running
+if ! curl -s http://localhost:8000/api/health > /dev/null 2>&1; then
+    echo "❌ Error: Server is not running at http://localhost:8000"
+    echo "Please start the server first:"
+    echo "  python -m app.main"
+    exit 1
+fi
+
+echo "✓ Server is running"
 echo ""
 
 # Test 1: Root endpoint
@@ -28,7 +40,7 @@ curl -s http://localhost:8000/openapi.json | python -c "import sys, json; data=j
 echo ""
 
 echo "=========================================="
-echo "Tests complete!"
+echo "✓ Tests complete!"
 echo ""
 echo "To use with a real API key:"
 echo "1. Edit .env file"

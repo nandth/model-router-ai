@@ -43,10 +43,12 @@ Send a prompt to ChatGPT and get a response.
 ```json
 {
   "prompt": "What is Python?",
-  "model": "gpt-3.5-turbo",  // optional, defaults to gpt-3.5-turbo
-  "max_tokens": 1000          // optional, defaults to 1000
+  "model": "gpt-3.5-turbo",
+  "max_tokens": 1000
 }
 ```
+
+Note: `model` and `max_tokens` are optional parameters. If not specified, defaults to `gpt-3.5-turbo` and `1000` respectively.
 
 **Response:**
 ```json
@@ -79,7 +81,7 @@ Check API health and configuration status.
 ```json
 {
   "status": "healthy",
-  "openai_api_key": "configured"  // or "not configured"
+  "openai_api_key": "configured"
 }
 ```
 

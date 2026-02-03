@@ -19,7 +19,8 @@ class LLMClient:
         """Initialize OpenAI client."""
         self.openai_api_key = os.getenv("OPENAI_API_KEY")
         
-        if not self.openai_api_key or self.openai_api_key == "your-openai-api-key-here":
+        # Check if API key is set and looks valid (starts with 'sk-')
+        if not self.openai_api_key or not self.openai_api_key.startswith("sk-"):
             raise LLMClientError(
                 "OpenAI API key not configured. Please set OPENAI_API_KEY in .env file"
             )
