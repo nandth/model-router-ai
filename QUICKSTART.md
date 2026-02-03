@@ -148,9 +148,6 @@ All tests should pass, demonstrating the routing logic works correctly.
 
 ## Common Issues
 
-**Issue**: `ModuleNotFoundError: No module named 'anthropic'`
-- **Solution**: Update dependencies: `pip install -r requirements.txt`
-
 **Issue**: "OpenAI API key not configured"
 - **Solution**: Add `OPENAI_API_KEY` to `.env` file with a valid key from https://platform.openai.com/api-keys
 
@@ -159,6 +156,9 @@ All tests should pass, demonstrating the routing logic works correctly.
 
 **Issue**: "Failed after 3 retries"
 - **Solution**: Check your OpenAI API key is valid, check network connection, and verify OpenAI API status
+
+**Issue**: Dependencies not installing correctly
+- **Solution**: Make sure you have Python 3.8+ and run `pip install -r requirements.txt` again
 
 ## Pro Tips
 

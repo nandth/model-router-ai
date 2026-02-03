@@ -88,12 +88,8 @@ class LLMClient:
         if not config:
             raise LLMClientError(f"Unknown model: {model}")
         
-        provider = config["provider"]
-        
-        if provider == "openai":
-            return self.call_openai(model, prompt, max_tokens)
-        else:
-            raise LLMClientError(f"Unknown provider: {provider}")
+        # All models are now OpenAI
+        return self.call_openai(model, prompt, max_tokens)
     
     def should_escalate(self, response_text: str) -> bool:
         """
