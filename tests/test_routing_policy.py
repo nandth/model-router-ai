@@ -18,11 +18,11 @@ class TestRoutingPolicy:
         config = ModelConfig.get_model_config(model)
         assert config["tier"] == ModelTier.MID
     
-    def test_hard_routes_to_high(self):
-        """Test that hard difficulty routes to high-capability models."""
+    def test_hard_routes_to_best(self):
+        """Test that hard difficulty routes to best-capability models."""
         model = RoutingPolicy.select_model(0.8, "hard")
         config = ModelConfig.get_model_config(model)
-        assert config["tier"] == ModelTier.HIGH
+        assert config["tier"] == ModelTier.BEST
     
     def test_escalation_from_cheap(self):
         """Test escalation from cheap to mid tier."""
@@ -40,7 +40,7 @@ class TestRoutingPolicy:
         assert escalated != initial_model
     
     def test_escalation_from_mid(self):
-        """Test escalation from mid to high tier."""
+        """Test escalation from mid to best tier."""
         initial_model = "gpt-4"
         escalated = RoutingPolicy.select_model(
             0.5, "medium",
@@ -49,7 +49,7 @@ class TestRoutingPolicy:
         )
         
         escalated_config = ModelConfig.get_model_config(escalated)
-        assert escalated_config["tier"] == ModelTier.HIGH
+        assert escalated_config["tier"] == ModelTier.BEST
     
     def test_cost_estimation(self):
         """Test cost estimation."""
@@ -61,8 +61,8 @@ class TestRoutingPolicy:
         """Test getting models by tier."""
         cheap_models = ModelConfig.get_models_by_tier(ModelTier.CHEAP)
         mid_models = ModelConfig.get_models_by_tier(ModelTier.MID)
-        high_models = ModelConfig.get_models_by_tier(ModelTier.HIGH)
+        best_models = ModelConfig.get_models_by_tier(ModelTier.BEST)
         
         assert len(cheap_models) > 0
         assert len(mid_models) > 0
-        assert len(high_models) > 0
+        assert len(best_models) > 0
