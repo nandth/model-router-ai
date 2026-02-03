@@ -77,11 +77,11 @@ class RouterService:
                     )
                     
                     if escalated_model != current_model:
-                        # Log the initial attempt
+                        # Log the initial attempt (not escalated)
                         self._log_request(
                             db, prompt, difficulty_score, current_model,
                             input_tokens, output_tokens, actual_cost, latency_ms,
-                            success=True, retry_count=0, escalated=1,
+                            success=True, retry_count=0, escalated=0,
                             response_text=response_text
                         )
                         

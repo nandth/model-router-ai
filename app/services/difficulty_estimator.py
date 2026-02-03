@@ -106,10 +106,10 @@ class DifficultyEstimator:
         score = 0.0
         
         # Multiple sentences indicate complexity
-        sentences = len(re.split(r'[.!?]+', prompt))
-        if sentences > 3:
+        sentences = [s for s in re.split(r'[.!?]+', prompt) if s.strip()]
+        if len(sentences) > 3:
             score += 0.3
-        elif sentences > 1:
+        elif len(sentences) > 1:
             score += 0.15
         
         # Questions indicate complexity
