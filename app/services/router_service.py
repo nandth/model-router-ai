@@ -185,6 +185,7 @@ class RouterService:
                 "total_requests": 0,
                 "successful_requests": 0,
                 "failed_requests": 0,
+                "success_rate": 0.0,
                 "total_cost": 0.0,
                 "avg_latency_ms": 0.0,
                 "total_tokens": 0,

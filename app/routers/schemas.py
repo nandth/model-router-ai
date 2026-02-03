@@ -1,5 +1,5 @@
 """API schemas for request/response models."""
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 
 
@@ -11,6 +11,8 @@ class PromptRequest(BaseModel):
 
 class PromptResponse(BaseModel):
     """Response model for prompt routing."""
+    model_config = ConfigDict(protected_namespaces=())
+    
     success: bool
     response: Optional[str] = None
     model_used: Optional[str] = None

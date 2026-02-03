@@ -3,7 +3,7 @@ import os
 import time
 from typing import Optional, Tuple, Dict
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
-import openai
+from openai import OpenAI, APIError, APIConnectionError
 from anthropic import Anthropic
 from dotenv import load_dotenv
 
@@ -25,15 +25,19 @@ class LLMClient:
         
         # Initialize clients
         if self.openai_api_key:
-            openai.api_key = self.openai_api_key
+            self.openai_client = OpenAI(api_key=self.openai_api_key)
+        else:
+            self.openai_client = None
         
         if self.anthropic_api_key:
             self.anthropic_client = Anthropic(api_key=self.anthropic_api_key)
+        else:
+            self.anthropic_client = None
     
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=2, max=10),
-        retry=retry_if_exception_type((openai.APIError, openai.APIConnectionError))
+        retry=retry_if_exception_type((APIError, APIConnectionError))
     )
     def call_openai(self, model: str, prompt: str, max_tokens: int = 1000) -> Tuple[str, int, int, float]:
         """
@@ -47,10 +51,13 @@ class LLMClient:
         Returns:
             Tuple of (response_text, input_tokens, output_tokens, latency_ms)
         """
+        if not self.openai_client:
+            raise LLMClientError("OpenAI API key not configured")
+        
         start_time = time.time()
         
         try:
-            response = openai.ChatCompletion.create(
+            response = self.openai_client.chat.completions.create(
                 model=model,
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=max_tokens
@@ -85,6 +92,9 @@ class LLMClient:
         Returns:
             Tuple of (response_text, input_tokens, output_tokens, latency_ms)
         """
+        if not self.anthropic_client:
+            raise LLMClientError("Anthropic API key not configured")
+        
         start_time = time.time()
         
         try:
