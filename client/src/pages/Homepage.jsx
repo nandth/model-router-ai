@@ -1,14 +1,18 @@
 import { useState } from "react";
 import arrowIcon from "../assets/image.png";
 
-function Homepage() {
+function Homepage({ setLoadingChat }) {
   const [inputText, setInputText] = useState("");
   const handleInputChange = (event) => {
     setInputText(event.target.value);
   };
 
   const handleClick = (event) => {
-    //call to api
+    setLoadingChat(true);
+
+    setTimeout(() => {
+      setLoadingChat(false);
+    }, 2000);
   };
 
   return (
