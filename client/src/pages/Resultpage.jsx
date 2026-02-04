@@ -29,7 +29,6 @@ function Resultpage({ setRenderResultPage }) {
     if (!prompt) navigate("/chat");
 
     const fetchData = async (prompt) => {
-      console.log(apiKey);
       try {
         const res = await fetch(apiKey, {
           method: "POST",
