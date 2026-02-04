@@ -1,24 +1,26 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import arrowIcon from "../assets/image.png";
 import SplitText from "../components/SplitText";
 import TextType from "../components/TextType";
+import GlassSurface from "../components/GlassSurface";
+import { useNavigate } from "react-router-dom";
+import { PromptContext } from "../App";
 
-function Homepage({ setLoadingChat }) {
+function Homepage({ setLoadingChat, setRenderResultPage }) {
+  const { prompt, setPrompt } = useContext(PromptContext);
+  const navigate = useNavigate();
   const [inputText, setInputText] = useState("");
   const handleInputChange = (event) => {
     setInputText(event.target.value);
   };
 
-  const handleClick = (event) => {
-    setLoadingChat(true);
-
-    setTimeout(() => {
-      setLoadingChat(false);
-    }, 2000);
+  const handleClick = () => {
+    setPrompt(inputText);
+    navigate("/chat");
   };
 
   return (
-    <div className="w-screen h-screen bg-[#171717] flex flex-col justify-center items-center gap-12.5">
+    <div className="relative z-10 flex flex-col justify-center items-center gap-12.5">
       <div className="flex flex-col justify-around items-center gap-3.5">
         <SplitText
           text="AI Model Router"
@@ -58,7 +60,12 @@ function Homepage({ setLoadingChat }) {
           cursorBlinkDuration={0.5}
         />
       </div>
-      <div className="w-100 h-12 pl-2.5 pr-1.5 bg-[#272727] flex items-center justify-around gap-5 rounded-3xl text-[#C7C7C7]">
+      <GlassSurface
+        width={400}
+        height={48}
+        borderRadius={24}
+        className="pl-2.5 pr-1.5 flex items-center justify-around gap-5 text-[#C7C7C7]"
+      >
         <input
           onChange={handleInputChange}
           type="text"
@@ -75,7 +82,7 @@ function Homepage({ setLoadingChat }) {
         >
           <img src={arrowIcon} className="aspect-square h-[11.67px]" />
         </button>
-      </div>
+      </GlassSurface>
     </div>
   );
 }
