@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { PromptContext } from "../App";
 import { BarLoader } from "react-spinners";
 
-const apiKey = import.meta.env.API_KEY;
+const apiKey = import.meta.env.VITE_API_KEY;
 
 function Resultpage({ setRenderResultPage }) {
   const { prompt, setPrompt } = useContext(PromptContext);
@@ -22,6 +22,7 @@ function Resultpage({ setRenderResultPage }) {
     if (!prompt) return;
 
     const fetchData = async (prompt) => {
+      console.log(apiKey);
       try {
         const res = await fetch(apiKey, {
           method: "POST",
