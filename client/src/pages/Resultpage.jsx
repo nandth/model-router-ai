@@ -26,7 +26,7 @@ function Resultpage({ setRenderResultPage }) {
   };
 
   useEffect(() => {
-    if (!prompt) return;
+    if (!prompt) navigate("/chat");
 
     const fetchData = async (prompt) => {
       console.log(apiKey);
