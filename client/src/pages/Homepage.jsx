@@ -19,6 +19,12 @@ function Homepage({ setLoadingChat, setRenderResultPage }) {
     navigate("/chat");
   };
 
+  const handleKeyDown = (event) => {
+    if (event.key.toLowerCase() === "enter") {
+      handleClick();
+    }
+  };
+
   return (
     <div className="relative z-10 flex flex-col justify-center items-center gap-12.5">
       <div className="flex flex-col justify-around items-center gap-3.5">
@@ -68,6 +74,7 @@ function Homepage({ setLoadingChat, setRenderResultPage }) {
       >
         <input
           onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
           type="text"
           value={inputText}
           name="prompt"

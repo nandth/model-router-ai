@@ -14,8 +14,15 @@ function Resultpage({ setRenderResultPage }) {
   const [loading, setLoading] = useState(true);
   const [inputText, setInputText] = useState(prompt);
   const navigate = useNavigate();
+
   const handleInputChange = (event) => {
     setInputText(event.target.value);
+  };
+
+  const handleKeyDown = (event) => {
+    if (event.key.toLowerCase() === "enter") {
+      handleClick();
+    }
   };
 
   useEffect(() => {
@@ -48,8 +55,29 @@ function Resultpage({ setRenderResultPage }) {
     fetchData(prompt);
   }, [prompt]);
 
-  const handleClick = () => {
+  const handleClick = async () => {
     setPrompt(inputText);
+
+    setLoading(true);
+
+    try {
+      const res = await fetch(apiKey, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: inputText,
+          route_mode: "auto",
+          max_tokens: 500,
+        }),
+      });
+
+      const response = await res.json();
+      setData(response);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (loading) {
@@ -92,6 +120,7 @@ function Resultpage({ setRenderResultPage }) {
       >
         <input
           onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
           type="text"
           value={inputText}
           name="prompt"
