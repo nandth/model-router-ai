@@ -1,7 +1,9 @@
 """API schemas for request/response models."""
-from pydantic import BaseModel, Field, ConfigDict
-from typing import Any, Dict, List, Optional
+from pydantic import BaseModel, Field, ConfigDict, field_validator
+from typing import List, Optional
 from enum import Enum
+
+from app.services.input_sanitizer import DEFAULT_MAX_PROMPT_CHARS, validate_prompt
 
 
 class RouteMode(str, Enum):
@@ -12,21 +14,33 @@ class RouteMode(str, Enum):
 
 class PromptRequest(BaseModel):
     """Request model for sending a prompt to ChatGPT."""
-    prompt: str = Field(..., min_length=1, description="The prompt text to send to ChatGPT")
-    model: Optional[str] = Field(
-        "gpt-3.5-turbo", 
+    prompt: str = Field(
+        ...,
+        min_length=1,
+        max_length=DEFAULT_MAX_PROMPT_CHARS,
+        description="The prompt text to send to ChatGPT",
+    )
+    model: str = Field(
+        "gpt-3.5-turbo",
+        max_length=128,
         description="Model hint (ignored in AUTO mode, used in FORCE mode)"
     )
-    max_tokens: Optional[int] = Field(
+    max_tokens: int = Field(
         1000, 
         ge=1, 
         le=4000, 
         description="Maximum tokens to generate"
     )
-    route_mode: Optional[RouteMode] = Field(
+    route_mode: RouteMode = Field(
         RouteMode.AUTO,
         description="Routing mode: 'auto' (server chooses) or 'force' (use client model)"
     )
+
+    @field_validator("prompt")
+    @classmethod
+    def _validate_prompt(cls, v: str) -> str:
+        # Keep prompts code-friendly (preserve whitespace) but block obvious misuse.
+        return validate_prompt(v, max_chars=DEFAULT_MAX_PROMPT_CHARS)
 
 
 class RoutingDetails(BaseModel):
@@ -46,7 +60,7 @@ class PromptResponse(BaseModel):
     """Response model from ChatGPT with routing information."""
     model_config = ConfigDict(protected_namespaces=())
     
-    success: bool = Field(True, description="Whether the request succeeded")
+    success: bool = Field(True, description="Did the request succeeded")
     response: str = Field(..., description="The response from ChatGPT")
     model_used: str = Field(..., description="The model that actually produced the response")
     tokens_used: int = Field(..., description="Total tokens used (input + output)")

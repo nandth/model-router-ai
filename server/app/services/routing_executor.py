@@ -218,19 +218,26 @@ class RoutingExecutor:
         return self.llm_call_fn(model, messages, max_tokens)
 
 
-def create_openai_call_fn():
-    """Create an LLM call function using OpenAI client."""
+def create_openai_client():
+    """Create an OpenAI client if OPENAI_API_KEY is configured; else return None."""
     import os
     from openai import OpenAI
     from dotenv import load_dotenv
-    
+
     load_dotenv()
-    
+
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         return None
-    
-    client = OpenAI(api_key=api_key)
+
+    return OpenAI(api_key=api_key)
+
+
+def create_openai_call_fn():
+    """Create a non-streaming LLM call function using OpenAI client."""
+    client = create_openai_client()
+    if client is None:
+        return None
     
     def call_openai(
         model: str,
@@ -250,3 +257,61 @@ def create_openai_call_fn():
         return response_text, total_tokens
     
     return call_openai
+
+
+def create_openai_stream_fn():
+    """
+    Create a streaming LLM call function using OpenAI chat.completions streaming.
+
+    Yields dict events:
+    - {"type": "delta", "text": "..."} for streamed text chunks
+    - {"type": "usage", "usage": {...}} when usage is available (if supported)
+    """
+    client = create_openai_client()
+    if client is None:
+        return None
+
+    def stream_openai(model: str, messages: List[Dict], max_tokens: int):
+        # Request usage in the stream when supported by the API. Fall back gracefully
+        # if the installed SDK / API doesn't support stream_options.
+        try:
+            stream = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                max_tokens=max_tokens,
+                stream=True,
+                stream_options={"include_usage": True},
+            )
+        except TypeError:
+            stream = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                max_tokens=max_tokens,
+                stream=True,
+            )
+
+        for chunk in stream:
+            # Text deltas
+            try:
+                choice0 = chunk.choices[0]
+                delta = getattr(choice0, "delta", None)
+                text = getattr(delta, "content", None)
+            except Exception:
+                text = None
+
+            if text:
+                yield {"type": "delta", "text": text}
+
+            # Usage (typically appears in the final chunk when include_usage is enabled)
+            usage = getattr(chunk, "usage", None)
+            if usage is not None:
+                yield {
+                    "type": "usage",
+                    "usage": {
+                        "prompt_tokens": getattr(usage, "prompt_tokens", None),
+                        "completion_tokens": getattr(usage, "completion_tokens", None),
+                        "total_tokens": getattr(usage, "total_tokens", None),
+                    },
+                }
+
+    return stream_openai

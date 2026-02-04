@@ -16,6 +16,7 @@ from app.services.routing_executor import (
     RoutingExecutor,
     RoutingExecutorError,
     create_openai_call_fn,
+    create_openai_stream_fn,
 )
 from app.services.request_logger import (
     RequestLogger,
@@ -38,6 +39,7 @@ __all__ = [
     "RoutingExecutor",
     "RoutingExecutorError",
     "create_openai_call_fn",
+    "create_openai_stream_fn",
     # Request logger
     "RequestLogger",
     "configure_router_logging",

@@ -165,7 +165,8 @@ class SelfEvalParser:
         Extract JSON object from response text.
         
         Handles cases where JSON may be wrapped in markdown or other text.
-        Uses a balanced brace matching approach for nested structures.
+        Uses a balanced brace matching approach for nested structures, while ignoring
+        braces that occur inside JSON strings (important when answers contain code).
         """
         # First, try to find JSON starting with { and containing "answer"
         text = response_text.strip()
@@ -175,13 +176,32 @@ class SelfEvalParser:
         if start_idx == -1:
             return text
         
-        # Use balanced brace matching
+        # Use balanced brace matching, but ignore braces inside quoted strings.
         depth = 0
         end_idx = start_idx
+        in_string = False
+        escape = False
         for i in range(start_idx, len(text)):
-            if text[i] == '{':
+            ch = text[i]
+
+            if in_string:
+                if escape:
+                    escape = False
+                    continue
+                if ch == "\\":
+                    escape = True
+                    continue
+                if ch == '"':
+                    in_string = False
+                continue
+
+            if ch == '"':
+                in_string = True
+                continue
+
+            if ch == "{":
                 depth += 1
-            elif text[i] == '}':
+            elif ch == "}":
                 depth -= 1
                 if depth == 0:
                     end_idx = i + 1
