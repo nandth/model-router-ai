@@ -6,7 +6,7 @@ class ModelTier(str, Enum):
     """Model capability tiers."""
     CHEAP = "cheap"
     MID = "mid"
-    HIGH = "high"
+    BEST = "best"  # Renamed from HIGH for consistency
 
 class ModelConfig:
     """Configuration for LLM models."""
@@ -32,9 +32,9 @@ class ModelConfig:
             "description": "Balanced performance and cost"
         },
         
-        # High-capability models - for hard tasks
+        # Best-capability models - for hard tasks
         "gpt-4-turbo": {
-            "tier": ModelTier.HIGH,
+            "tier": ModelTier.BEST,
             "provider": "openai",
             "cost_per_1k_input": 0.01,
             "cost_per_1k_output": 0.03,
@@ -105,8 +105,8 @@ class RoutingPolicy:
             return "gpt-4" if "gpt-4" in models else models[0]
         
         else:  # hard
-            # Use high-capability model
-            models = ModelConfig.get_models_by_tier(ModelTier.HIGH)
+            # Use best-capability model
+            models = ModelConfig.get_models_by_tier(ModelTier.BEST)
             # Prefer GPT-4 Turbo for best performance
             return "gpt-4-turbo" if "gpt-4-turbo" in models else models[0]
     
@@ -124,7 +124,7 @@ class RoutingPolicy:
             models = ModelConfig.get_models_by_tier(ModelTier.MID)
             return models[0] if models else "gpt-4"
         elif current_tier == ModelTier.MID:
-            models = ModelConfig.get_models_by_tier(ModelTier.HIGH)
+            models = ModelConfig.get_models_by_tier(ModelTier.BEST)
             return models[0] if models else "gpt-4-turbo"
         else:
             # Already at highest tier
