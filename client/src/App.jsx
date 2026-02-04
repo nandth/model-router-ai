@@ -8,10 +8,9 @@ import AppRoutes from "./routes/AppRoutes";
 export const PromptContext = createContext({});
 
 function App() {
-  const [loadingChat, setLoadingChat] = useState(false);
   const [loadingWebSite, setLoadingWebSite] = useState(true);
   const [renderResultPage, setRenderResultPage] = useState(false);
-  const [prompt, setPrompt] = useState(" ");
+  const [prompt, setPrompt] = useState("");
 
   useEffect(() => {
     const num = Math.floor(Math.random() * 5) + 1;
@@ -20,7 +19,7 @@ function App() {
     }, num * 1000);
   }, []);
 
-  if (loadingChat || loadingWebSite) {
+  if (loadingWebSite) {
     return (
       <div className="w-screen h-screen relative overflow-hidden flex justify-center items-center">
         <div className="absolute inset-0 -z-10">
@@ -49,10 +48,7 @@ function App() {
             zoom={0.9}
           />
         </div>
-        <LoadingScreen
-          loadingChat={loadingChat}
-          loadingWebSite={loadingWebSite}
-        />
+        <LoadingScreen loadingWebSite={loadingWebSite} />
       </div>
     );
   }
@@ -85,10 +81,7 @@ function App() {
             zoom={0.9}
           />
         </div>
-        <AppRoutes
-          setLoadingChat={setLoadingChat}
-          setRenderResultPage={setRenderResultPage}
-        />
+        <AppRoutes setRenderResultPage={setRenderResultPage} />
       </div>
     </PromptContext>
   );

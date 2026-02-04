@@ -4,9 +4,14 @@ import TextType from "../components/TextType";
 import GlassSurface from "../components/GlassSurface";
 import { useNavigate } from "react-router-dom";
 import { PromptContext } from "../App";
+import { BarLoader } from "react-spinners";
 
-function Resultpage({ setLoadingChat, setRenderResultPage }) {
+const apiKey = import.meta.env.API_KEY;
+
+function Resultpage({ setRenderResultPage }) {
   const { prompt, setPrompt } = useContext(PromptContext);
+  const [data, setData] = useState({});
+  const [loading, setLoading] = useState(true);
   const [inputText, setInputText] = useState(prompt);
   const navigate = useNavigate();
   const handleInputChange = (event) => {
@@ -14,27 +19,56 @@ function Resultpage({ setLoadingChat, setRenderResultPage }) {
   };
 
   useEffect(() => {
-    setLoadingChat(true);
-    fetch("https://jsonplaceholder.typicode.com/todos/1")
-      .then((response) => response.json())
-      .then((json) => console.log(json))
-      .finally(() => {
-        setLoadingChat(false);
-      });
-  }, []);
+    if (!prompt) return;
+
+    const fetchData = async (prompt) => {
+      try {
+        const res = await fetch(apiKey, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            prompt: prompt,
+            route_mode: "auto",
+            max_tokens: 500,
+          }),
+        });
+        const response = await res.json();
+        setData(response);
+        console.log(response);
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData(prompt);
+  }, [prompt]);
 
   const handleClick = () => {
     setPrompt(inputText);
-    navigate("/chat");
   };
+
+  if (loading) {
+    return (
+      <BarLoader
+        color="white"
+        loading={true}
+        width={250}
+        size={150}
+        aria-label="Loading Spinner"
+        data-testid="loader"
+      />
+    );
+  }
 
   return (
     <div className="relative z-10 flex flex-col justify-center items-center gap-12.5">
       <div className="flex flex-col justify-around items-center gap-3.5">
         <TextType
-          text={
-            'The meaning of life can vary greatly between different philosophical views, religions, and individuals, but generally, it could be viewed as the pursuit of happiness, seeking knowledge, or contributing to society or the greater good. \n\nDogs have eyes, feet, and hair as a result of millions of years of evolution. Eyes allow them to perceive their surroundings, feet enable them to move and explore those surroundings, and hair (or fur) helps regulate their body temperature and provides some level of protection.\n\nDogs are not blue because color in animals is determined by genes and evolution. The colors we see in dogs today are the result of selective breeding by humans. However, there are "blue" dogs, but in the animal world, "blue" refers to a type of gray.\n\nThe phrase "roses grown in the sky" is not literal. Roses grow from the ground, not the sky. It might be a metaphor or an expression, meaning might depend on the context.\n\nPotatoes are actually not grown in water, they are grown in soil. However, they need a fair amount of water to grow correctly. Potato plants love well-drained, loose soil.\n\nThe concept of God varies greatly among different religions and belief systems. In monotheistic religions like Christianity, Judaism, Islam, God is seen as an all-powerful, all-knowing entity who is responsible for the creation of the universe. In non-theistic religions or philosophical systems, the concept of "God" might not exist or might be understood differently.\n\nThe color of your skin is determined by a pigment called melanin produced by cells in your skin called melanocytes. The amount of melanin you have generally decides the color of your skin, hair, and eyes. If you have less melanin, your skin will be lighter (white). If you have more, your skin will be darker. The amount of melanin is primarily determined by genetics – it is inherited from your parents.'
-          }
+          text={data.response}
           typingSpeed={50}
           pauseDuration={1500}
           showCursor

@@ -2,26 +2,16 @@ import { Routes, Route } from "react-router-dom";
 import Homepage from "../pages/Homepage";
 import Resultpage from "../pages/Resultpage";
 
-function AppRoutes({ setLoadingChat, setRenderResultPage }) {
+function AppRoutes({ setRenderResultPage }) {
   return (
     <Routes>
       <Route
         path="/"
-        element={
-          <Homepage
-            setLoadingChat={setLoadingChat}
-            setRenderResultPage={setRenderResultPage}
-          />
-        }
+        element={<Homepage setRenderResultPage={setRenderResultPage} />}
       />
       <Route
         path="/chat"
-        element={
-          <Resultpage
-            setLoadingChat={setLoadingChat}
-            setRenderResultPage={setRenderResultPage}
-          />
-        }
+        element={<Resultpage setRenderResultPage={setRenderResultPage} />}
       />
     </Routes>
   );
