@@ -11,6 +11,13 @@ An exploration of cost-aware LLM orchestration, multi-stage routing, and escalat
 - **Scope**: Demonstration of orchestration patterns; not production-grade, but architecturally coherent
 - **Value**: Shows understanding of cost-quality tradeoffs, failure handling, and system decomposition in LLM systems
 
+## What This Demonstrates
+
+- **Cost-aware orchestration**: Tiered model selection based on prompt analysis
+- **Failure handling**: Self-evaluation and automatic escalation
+- **System decomposition**: Cleanly separated routing, execution, and infrastructure concerns
+- **Tradeoff awareness**: Explicit documentation of limitations and design choices
+
 ## Features
 
 ### Backend (FastAPI + Python)
@@ -35,7 +42,7 @@ An exploration of cost-aware LLM orchestration, multi-stage routing, and escalat
 - FastAPI (API framework)
 - Uvicorn (ASGI server)
 - Pydantic (data validation)
-- SQLAlchemy (database ORM)
+- SQLAlchemy (minimal ORM usage.. for logging) 
 - OpenAI SDK
 - Tenacity (retry logic with exponential backoff)
 
@@ -76,6 +83,8 @@ npm run dev
 ```
 
 ## Architecture
+
+The system is intentionally decomposed to isolate routing policy from execution and infrastructure concerns.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -196,7 +205,7 @@ The system escalates to high-capability tier when detecting:
 {
   "success": true,
   "response": "Quantum computing is...",
-  "model_used": "gpt-3.5-turbo",
+  "model_used": "low-cost-tier",
   "tokens_used": 150,
   "tier": "low-cost",
   "latency_ms": 1250.5,
@@ -338,13 +347,6 @@ curl -X POST http://localhost:8080/api/prompt \
 ```
 
 Interactive docs: `http://localhost:8080/docs`
-
-## What This Demonstrates
-
-- **Cost-aware orchestration**: Tiered model selection based on prompt analysis
-- **Failure handling**: Self-evaluation and automatic escalation
-- **System decomposition**: Cleanly separated routing, execution, and infrastructure concerns
-- **Tradeoff awareness**: Explicit documentation of limitations and design choices
 
 ## What This Is Not
 
