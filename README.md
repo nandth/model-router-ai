@@ -105,8 +105,8 @@ npm run dev
 │ Router  │  │  Features   │  │   & Input    │
 │         │  │  Extractor  │  │ Sanitizer    │
 └─────────┘  └─────────────┘  └──────────────┘
-     │              │              
-     │              ▼              
+     │              │
+     │              ▼
      │         ┌─────────────────────┐
      │         │  Request Logger     │
      │         │  (SQLite)           │
@@ -206,7 +206,8 @@ The system escalates to high-capability tier when detecting:
     "score": 35,
     "hard_triggers": [],
     "escalated": false,
-    "stage_a_confidence": 0.92
+    "stage_a_confidence": 0.92,
+    "stage_a_escalate": false
   }
 }
 ```
