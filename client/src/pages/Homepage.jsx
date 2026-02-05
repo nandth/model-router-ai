@@ -20,7 +20,7 @@ function Homepage({ setLoadingChat, setRenderResultPage }) {
   };
 
   const handleKeyDown = (event) => {
-    if (event.key.toLowerCase() === "enter") {
+    if (event.key === "Enter") {
       handleClick();
     }
   };

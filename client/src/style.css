@@ -132,3 +132,24 @@ body {
     justify-content: center;
     align-items: center;
 }
+
+/* Minimal dark scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.6);
+    border-radius: 9999px;
+}
+
+/* Hide scrollbar when not scrolling */
+body {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.6) transparent;
+}
