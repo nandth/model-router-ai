@@ -178,7 +178,6 @@ function Resultpage() {
           width={50}
           height={50}
           borderRadius={24}
-          className="pl-2.5 pr-1.5 flex items-center justify-center gap-5 bg-[#c7c7c7]"
           displace={0}
           distortionScale={0}
         >
