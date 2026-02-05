@@ -35,7 +35,7 @@ An exploration of cost-aware LLM orchestration, multi-stage routing, and escalat
 - FastAPI (API framework)
 - Uvicorn (ASGI server)
 - Pydantic (data validation)
-- SQLAlchemy (database ORM)
+- SQLAlchemy (minimal ORM usage.. for logging) 
 - OpenAI SDK
 - Tenacity (retry logic with exponential backoff)
 
@@ -76,6 +76,8 @@ npm run dev
 ```
 
 ## Architecture
+
+The system is intentionally decomposed to isolate routing policy from execution and infrastructure concerns.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -196,7 +198,7 @@ The system escalates to high-capability tier when detecting:
 {
   "success": true,
   "response": "Quantum computing is...",
-  "model_used": "gpt-3.5-turbo",
+  "model_used": "low-cost-tier",
   "tokens_used": 150,
   "tier": "low-cost",
   "latency_ms": 1250.5,
