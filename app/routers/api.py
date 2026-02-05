@@ -20,6 +20,7 @@ from app.services.routing_executor import (
     create_openai_call_fn,
     create_openai_stream_fn,
 )
+from app.services.savings import estimate_tokens_saved
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -109,6 +110,7 @@ def _execute_prompt(request: PromptRequest) -> PromptResponse:
         response=result["response"],
         model_used=result["model_used"],
         tokens_used=result["tokens_used"],
+        tokens_saved=int(result.get("tokens_saved") or 0),
         tier=result["tier"],
         latency_ms=result["latency_ms"],
         routing=routing_details,
@@ -222,6 +224,17 @@ async def stream_prompt(request: PromptRequest, _: None = Depends(_limit_stream)
 
             latency_ms = (time.time() - start_time) * 1000
             total_tokens = int((usage or {}).get("total_tokens") or 0)
+            tokens_saved = 0
+            if route_mode == RouterRouteMode.AUTO:
+                tokens_saved = estimate_tokens_saved(
+                    [
+                        {
+                            "model": model,
+                            "prompt_tokens": int((usage or {}).get("prompt_tokens") or 0),
+                            "completion_tokens": int((usage or {}).get("completion_tokens") or 0),
+                        }
+                    ]
+                )
 
             RequestLogger.log_request(
                 prompt=request.prompt,
@@ -232,6 +245,7 @@ async def stream_prompt(request: PromptRequest, _: None = Depends(_limit_stream)
                 tokens_stage_a=0,
                 tokens_stage_b=total_tokens,
                 total_tokens=total_tokens,
+                tokens_saved=tokens_saved,
                 latency_ms=latency_ms,
                 success=True,
             )
@@ -242,6 +256,7 @@ async def stream_prompt(request: PromptRequest, _: None = Depends(_limit_stream)
                     "model_used": model,
                     "tier": tier,
                     "tokens_used": total_tokens,
+                    "tokens_saved": tokens_saved,
                     "latency_ms": round(latency_ms, 2),
                 },
             )
@@ -256,6 +271,7 @@ async def stream_prompt(request: PromptRequest, _: None = Depends(_limit_stream)
                 tokens_stage_a=0,
                 tokens_stage_b=0,
                 total_tokens=0,
+                tokens_saved=0,
                 latency_ms=latency_ms,
                 success=False,
                 error=str(e),

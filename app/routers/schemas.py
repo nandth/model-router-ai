@@ -64,6 +64,11 @@ class PromptResponse(BaseModel):
     response: str = Field(..., description="The response from ChatGPT")
     model_used: str = Field(..., description="The model that actually produced the response")
     tokens_used: int = Field(..., description="Total tokens used (input + output)")
+    tokens_saved: int = Field(
+        0,
+        ge=0,
+        description="Estimated baseline-token-equivalent savings from routing (vs SAVINGS_BASELINE_MODEL, default: gpt-4)",
+    )
     tier: Optional[str] = Field(None, description="Model tier used (cheap/mid/best)")
     latency_ms: Optional[float] = Field(None, description="Total latency in milliseconds")
     routing: Optional[RoutingDetails] = Field(None, description="Routing decision details")

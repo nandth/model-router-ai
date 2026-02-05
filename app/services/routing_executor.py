@@ -1,7 +1,7 @@
 """Routing executor service - executes the full routing pipeline."""
 import logging
 import time
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from app.services.model_router import (
     ModelRouter,
@@ -13,6 +13,7 @@ from app.services.model_router import (
     get_model_for_tier,
 )
 from app.services.request_logger import RequestLogger
+from app.services.savings import estimate_tokens_saved
 
 logger = logging.getLogger(__name__)
 
@@ -39,8 +40,9 @@ class RoutingExecutor:
         
         Args:
             llm_call_fn: Function to call LLM. Signature:
-                         (model: str, messages: List[Dict], max_tokens: int) -> Tuple[str, int]
-                         Returns (response_text, tokens_used)
+                         (model: str, messages: List[Dict], max_tokens: int) -> Tuple[str, Dict[str, int]]
+                         Returns (response_text, usage) where usage includes
+                         prompt_tokens, completion_tokens, total_tokens.
         """
         self.llm_call_fn = llm_call_fn
     
@@ -71,27 +73,32 @@ class RoutingExecutor:
         # Track tokens and escalation
         tokens_stage_a = 0
         tokens_stage_b = 0
+        usage_stage_a: Optional[Dict[str, int]] = None
+        usage_stage_b: Optional[Dict[str, int]] = None
         stage_a_result: Optional[SelfEvalResult] = None
         final_tier = routing.initial_tier
         final_model = routing.initial_model
         final_response = ""
         escalated = False
+        tokens_saved = 0
         
         try:
             # FORCE mode or BEST tier: direct call, skip self-eval
             if route_mode == RouteMode.FORCE or routing.initial_tier == ModelTier.BEST:
-                final_response, tokens_stage_b = self._call_llm_direct(
+                final_response, usage_stage_b = self._call_llm_direct(
                     model=routing.initial_model,
                     prompt=prompt,
                     max_tokens=max_tokens
                 )
+                tokens_stage_b = int((usage_stage_b or {}).get("total_tokens") or 0)
             else:
                 # Stage A: Self-evaluation
-                stage_a_response, tokens_stage_a = self._call_llm_with_self_eval(
+                stage_a_response, usage_stage_a = self._call_llm_with_self_eval(
                     model=routing.initial_model,
                     prompt=prompt,
                     max_tokens=max_tokens
                 )
+                tokens_stage_a = int((usage_stage_a or {}).get("total_tokens") or 0)
                 
                 # Parse self-eval response
                 stage_a_result = SelfEvalParser.parse_response(stage_a_response)
@@ -104,7 +111,7 @@ class RoutingExecutor:
                     final_model = get_model_for_tier(final_tier)
                     
                     # Stage B: Escalated call
-                    final_response, tokens_stage_b = self._call_llm_stage_b(
+                    final_response, usage_stage_b = self._call_llm_stage_b(
                         model=final_model,
                         prompt=prompt,
                         score=routing.score,
@@ -112,11 +119,33 @@ class RoutingExecutor:
                         stage_a_result=stage_a_result,
                         max_tokens=max_tokens
                     )
+                    tokens_stage_b = int((usage_stage_b or {}).get("total_tokens") or 0)
                 else:
                     # Use Stage A answer as final
                     final_response = stage_a_result.answer
             
             latency_ms = (time.time() - start_time) * 1000
+
+            # Savings: baseline-token-equivalent savings vs a baseline model (default: gpt-4).
+            if route_mode == RouteMode.AUTO:
+                calls: List[Dict[str, Any]] = []
+                if usage_stage_a is not None:
+                    calls.append(
+                        {
+                            "model": routing.initial_model,
+                            "prompt_tokens": usage_stage_a.get("prompt_tokens", 0),
+                            "completion_tokens": usage_stage_a.get("completion_tokens", 0),
+                        }
+                    )
+                if usage_stage_b is not None:
+                    calls.append(
+                        {
+                            "model": final_model,
+                            "prompt_tokens": usage_stage_b.get("prompt_tokens", 0),
+                            "completion_tokens": usage_stage_b.get("completion_tokens", 0),
+                        }
+                    )
+                tokens_saved = estimate_tokens_saved(calls)
             
             # Log the request
             log_entry = RequestLogger.log_request(
@@ -128,6 +157,7 @@ class RoutingExecutor:
                 tokens_stage_a=tokens_stage_a,
                 tokens_stage_b=tokens_stage_b,
                 total_tokens=tokens_stage_a + tokens_stage_b,
+                tokens_saved=tokens_saved,
                 latency_ms=latency_ms,
                 success=True,
             )
@@ -140,6 +170,7 @@ class RoutingExecutor:
                 "score": routing.score,
                 "escalated": escalated,
                 "tokens_used": tokens_stage_a + tokens_stage_b,
+                "tokens_saved": tokens_saved,
                 "latency_ms": round(latency_ms, 2),
                 "routing_details": {
                     "initial_tier": routing.initial_tier.value,
@@ -163,6 +194,7 @@ class RoutingExecutor:
                 tokens_stage_a=tokens_stage_a,
                 tokens_stage_b=tokens_stage_b,
                 total_tokens=tokens_stage_a + tokens_stage_b,
+                tokens_saved=tokens_saved,
                 latency_ms=latency_ms,
                 success=False,
                 error=str(e),
@@ -175,7 +207,7 @@ class RoutingExecutor:
         model: str,
         prompt: str,
         max_tokens: int
-    ) -> Tuple[str, int]:
+    ) -> Tuple[str, Dict[str, int]]:
         """Make a direct LLM call without self-eval wrapper."""
         if self.llm_call_fn is None:
             raise RoutingExecutorError("LLM call function not configured")
@@ -188,7 +220,7 @@ class RoutingExecutor:
         model: str,
         prompt: str,
         max_tokens: int
-    ) -> Tuple[str, int]:
+    ) -> Tuple[str, Dict[str, int]]:
         """Make an LLM call with self-eval system prompt."""
         if self.llm_call_fn is None:
             raise RoutingExecutorError("LLM call function not configured")
@@ -204,7 +236,7 @@ class RoutingExecutor:
         features,
         stage_a_result: SelfEvalResult,
         max_tokens: int
-    ) -> Tuple[str, int]:
+    ) -> Tuple[str, Dict[str, int]]:
         """Make a Stage B escalated LLM call."""
         if self.llm_call_fn is None:
             raise RoutingExecutorError("LLM call function not configured")
@@ -243,7 +275,7 @@ def create_openai_call_fn():
         model: str,
         messages: List[Dict],
         max_tokens: int
-    ) -> Tuple[str, int]:
+    ) -> Tuple[str, Dict[str, int]]:
         """Call OpenAI API."""
         response = client.chat.completions.create(
             model=model,
@@ -252,9 +284,18 @@ def create_openai_call_fn():
         )
         
         response_text = response.choices[0].message.content or ""
-        total_tokens = response.usage.total_tokens if response.usage else 0
+        usage_obj = response.usage
+        prompt_tokens = int(getattr(usage_obj, "prompt_tokens", 0) or 0) if usage_obj else 0
+        completion_tokens = int(getattr(usage_obj, "completion_tokens", 0) or 0) if usage_obj else 0
+        total_tokens = int(getattr(usage_obj, "total_tokens", prompt_tokens + completion_tokens) or 0) if usage_obj else 0
+        if total_tokens <= 0:
+            total_tokens = prompt_tokens + completion_tokens
         
-        return response_text, total_tokens
+        return response_text, {
+            "prompt_tokens": prompt_tokens,
+            "completion_tokens": completion_tokens,
+            "total_tokens": total_tokens,
+        }
     
     return call_openai
 
