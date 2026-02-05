@@ -1,125 +1,93 @@
 # Model Router AI
 
-A full-stack application with intelligent prompt routing that analyzes text prompts and routes them to the most appropriate OpenAI models based on complexity, cost optimization, and self-evaluation capabilities.
+An exploration of cost-aware LLM orchestration, multi-stage routing, and escalation strategies in a controlled environment.
+
+## Executive Summary
+
+- **Problem**: LLM API costs vary by orders of magnitude; most requests don't need the most capable (expensive) models
+- **Solution**: Heuristic-based routing that analyzes prompt features (code presence, complexity, stakes) and routes to tiered providers
+- **Key technique**: Two-stage execution with self-evaluation—initial responses include confidence scores; low-confidence responses trigger escalation
+- **Stack**: FastAPI backend, React frontend, OpenAI models across three capability tiers
+- **Scope**: Demonstration of orchestration patterns; not production-grade, but architecturally coherent
+- **Value**: Shows understanding of cost-quality tradeoffs, failure handling, and system decomposition in LLM systems
 
 ## Features
 
 ### Backend (FastAPI + Python)
-- **Advanced Prompt Analysis**: Extracts features including code presence, question complexity, technical stakes
-- **Smart Model Routing**: Automatically routes to GPT-3.5, GPT-4, or GPT-4 Turbo based on analysis
-- **Self-Evaluation & Escalation**: Models evaluate their own confidence and escalate when uncertain
-- **Streaming Support**: Server-Sent Events (SSE) for real-time token streaming
-- **Rate Limiting**: Configurable per-IP rate limits to prevent abuse
-- **Input Sanitization**: Validates and sanitizes prompts while preserving code formatting
-- **Request Logging**: Comprehensive logging of all requests with metadata
-- **Hard Triggers**: Automatic escalation for high-stakes prompts (security, medical, legal)
-- **Multiple Endpoints**: Standard, streaming, raw text, and analysis-only endpoints
+- **Prompt feature extraction**: Code presence, question complexity, technical stakes detection
+- **Tiered model routing**: Routes to low-cost, mid-tier, or high-capability models based on heuristic scoring
+- **Self-evaluation with escalation**: Models assess confidence; uncertain responses trigger re-execution at higher tier
+- **Streaming support**: Server-Sent Events (SSE) for token-by-token delivery
+- **Rate limiting**: Per-IP request throttling
+- **Input sanitization**: Validates prompts while preserving code formatting
+- **Request logging**: SQLite-based persistence of routing decisions and metadata
+- **Hard triggers**: Keyword-based escalation for high-stakes domains (security, medical, legal)
+- **Multiple endpoints**: Standard, streaming, raw text, and analysis-only modes
 
 ### Frontend (React + Vite)
-- **Modern React 19 UI**: Beautiful, responsive interface with animations
-- **Real-time Results**: Live feedback on prompt analysis and routing decisions
-- **Interactive Design**: GSAP and Motion animations for smooth user experience
-- **TailwindCSS Styling**: Modern, customizable design system
-- **Glass Morphism Effects**: Custom visual components with gradient backgrounds
+- **React 19 UI**: Responsive interface with TailwindCSS styling
+- **Real-time feedback**: Displays routing decisions and analysis results
+- **Animated components**: GSAP and Motion for transitions
 
 ## Tech Stack
 
 ### Backend
-- **FastAPI**: Modern, high-performance web framework for building APIs
-- **Uvicorn**: Lightning-fast ASGI server
-- **Pydantic**: Data validation using Python type hints
-- **SQLAlchemy**: SQL toolkit and ORM for database operations
-- **OpenAI SDK**: Official OpenAI Python client
-- **Tenacity**: Robust retry library with exponential backoff
-- **Python-dotenv**: Environment variable management
+- FastAPI (API framework)
+- Uvicorn (ASGI server)
+- Pydantic (data validation)
+- SQLAlchemy (database ORM)
+- OpenAI SDK
+- Tenacity (retry logic with exponential backoff)
 
 ### Frontend
-- **React 19**: Latest React with improved performance and features
-- **Vite**: Next-generation frontend build tool
-- **TailwindCSS 4**: Utility-first CSS framework
-- **React Router**: Client-side routing
-- **GSAP**: Professional-grade animation library
-- **Motion**: Declarative animations for React
-- **Lucide React**: Beautiful, consistent icon library
-- **OGL**: Lightweight WebGL library for visual effects
+- React 19 + Vite
+- TailwindCSS
+- GSAP (animations)
+- React Router
 
-### Development Tools
-- **Pytest**: Testing framework
-- **ESLint**: JavaScript/TypeScript linting
-- **TypeScript**: Type-safe frontend development
+### Development
+- Pytest (testing)
+- ESLint (linting)
 
 ## Quick Start
 
 ### Backend Setup
 
-1. **Clone and install:**
-   ```bash
-   git clone https://github.com/nandth/model-router-ai.git
-   cd model-router-ai
-   pip install -r requirements.txt
-   ```
+```bash
+git clone https://github.com/nandth/model-router-ai.git
+cd model-router-ai
+pip install -r requirements.txt
 
-2. **Configure your API key:**
-   ```bash
-   # Create .env file with your OpenAI API key
-   echo "OPENAI_API_KEY=your_key_here" > .env
-   ```
+# Configure API key
+echo "OPENAI_API_KEY=your_key_here" > .env
 
-3. **Run the demo (no API key needed):**
-   ```bash
-   python server/demo.py
-   ```
-
-4. **Start the API server:**
-   ```bash
-   python -m app.main
-   # API available at http://localhost:8080
-   ```
+# Start server
+python -m app.main
+# API available at http://localhost:8080
+```
 
 ### Frontend Setup
 
-1. **Install dependencies:**
-   ```bash
-   cd client
-   npm install
-   ```
-
-2. **Start development server:**
-   ```bash
-   npm run dev
-   # Frontend available at http://localhost:5173
-   ```
-
-3. **Build for production:**
-   ```bash
-   npm run build
-   npm run preview
-   ```
+```bash
+cd client
+npm install
+npm run dev
+# Frontend available at http://localhost:5173
+```
 
 ## Architecture
 
-### System Overview
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    React Frontend (Vite)                     │
-│         • React 19 + TailwindCSS + GSAP animations          │
-│         • Interactive prompt input and result display        │
+│                    React Frontend                            │
+│         • Prompt input and result display                   │
 └──────────────────────────┬──────────────────────────────────┘
                            │ HTTP/SSE
                            ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                     FastAPI Backend                          │
-│                    (app/main.py)                             │
-│         • CORS enabled for frontend integration             │
-└────────────────────────┬─────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────┐
-│                   API Router Layer                           │
-│                (app/routers/api.py)                          │
 │  • POST /api/prompt          (standard request)             │
 │  • POST /api/prompt/stream   (SSE streaming)                │
-│  • POST /api/prompt/raw      (raw text input)               │
 │  • POST /api/analyze         (analysis only)                │
 │  • GET  /api/health          (health check)                 │
 └────────────────────────┬────────────────────────────────────┘
@@ -127,7 +95,6 @@ A full-stack application with intelligent prompt routing that analyzes text prom
                          ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                 Routing Executor                             │
-│           (app/services/routing_executor.py)                 │
 │  • Orchestrates multi-stage execution                       │
 │  • Manages self-evaluation and escalation                   │
 └────┬──────────────┬──────────────┬──────────────────────────┘
@@ -138,141 +105,89 @@ A full-stack application with intelligent prompt routing that analyzes text prom
 │ Router  │  │  Features   │  │   & Input    │
 │         │  │  Extractor  │  │ Sanitizer    │
 └─────────┘  └─────────────┘  └──────────────┘
-     │              │              │
-     │              ▼              ▼
+     │              │              
+     │              ▼              
      │         ┌─────────────────────┐
      │         │  Request Logger     │
-     │         │  • SQLite storage   │
+     │         │  (SQLite)           │
      │         └─────────────────────┘
      │
      ▼
 ┌─────────────────────────────────────┐
-│         OpenAI API Client            │
-│   • GPT-3.5 Turbo (cheap)           │
-│   • GPT-4 (mid)                     │
-│   • GPT-4 Turbo (best)              │
-│   • Streaming support               │
+│         OpenAI API                   │
+│   • Low-cost tier                   │
+│   • Mid-tier reasoning              │
+│   • High-capability tier            │
 └─────────────────────────────────────┘
 ```
 
 ### Components
 
-1. **Model Router** (`app/services/model_router.py`)
-   - Extracts prompt features (code, complexity, stakes)
-   - Computes difficulty/risk score (0-100)
-   - Routes to appropriate tier (cheap/mid/best)
-   - Evaluates hard triggers for automatic escalation
-   - Self-evaluation logic for confidence assessment
+**Model Router** (`app/services/model_router.py`)
+- Extracts prompt features (code presence, complexity markers, domain-specific keywords)
+- Computes heuristic score (0-100) based on weighted feature set
+- Maps score to capability tier
+- Applies hard triggers for high-stakes domains
 
-2. **Routing Executor** (`app/services/routing_executor.py`)
-   - Executes multi-stage routing pipeline
-   - Stage A: Initial model with self-evaluation
-   - Stage B: Escalation to better model if needed
-   - Handles both standard and streaming responses
+**Routing Executor** (`app/services/routing_executor.py`)
+- Two-stage execution: initial response with self-evaluation, optional escalation
+- Parses confidence scores from model output
+- Re-executes at higher tier if confidence below threshold
 
-3. **Prompt Features** (`app/services/prompt_features.py`)
-   - Extracts features: code presence, complexity indicators
-   - Identifies high-stakes keywords (security, medical, legal)
-   - Analyzes question types and technical depth
-   - Computes weighted difficulty score
+**Prompt Features** (`app/services/prompt_features.py`)
+- Regex-based feature extraction
+- Keyword matching for high-stakes detection
+- Weighted scoring function
 
-4. **Rate Limiter** (`app/services/rate_limiter.py`)
-   - In-memory sliding window rate limiting
-   - Configurable per-endpoint limits
-   - Per-IP tracking to prevent abuse
-   - Returns 429 status when limits exceeded
+**Rate Limiter, Input Sanitizer, Request Logger**
+- Standard API protection layers
+- SQLite persistence for request metadata
 
-5. **Input Sanitizer** (`app/services/input_sanitizer.py`)
-   - Validates prompt length and content
-   - Removes control characters while preserving code formatting
-   - Normalizes line endings across platforms
-   - Prevents empty or malformed prompts
+## Routing Pipeline
 
-6. **Request Logger** (`app/services/request_logger.py`)
-   - SQLite database persistence
-   - Tracks all requests with metadata
-   - Stores routing decisions and performance metrics
-   - Enables usage analytics and debugging
+### Tier Definitions
 
-## Installation
+**Low-cost tier** (Score: 0-40)
+- Use case: Simple questions, general information
+- Self-evaluation: Enabled (escalates if uncertain)
 
-### Prerequisites
-- Python 3.8 or higher
-- Node.js 18+ and npm
-- OpenAI API key (get from https://platform.openai.com/api-keys)
+**Mid-tier reasoning** (Score: 41-70)
+- Use case: Complex analysis, multi-step reasoning
+- Self-evaluation: Enabled (escalates if uncertain)
 
-### Backend Installation
+**High-capability tier** (Score: 71-100)
+- Use case: Technical implementation, critical decisions
+- Self-evaluation: Disabled (already highest tier)
 
-1. Clone the repository:
-```bash
-git clone https://github.com/nandth/model-router-ai.git
-cd model-router-ai
-```
+### Execution Flow
 
-2. Install Python dependencies:
-```bash
-pip install -r requirements.txt
-```
+1. **Feature extraction**: Analyze prompt for code blocks, complexity markers, high-stakes keywords
+2. **Score calculation**: Weighted sum of features → 0-100 score
+3. **Hard triggers**: Keywords (security, medical, legal) force escalation to high-capability tier
+4. **Tier selection**: Map score to tier
+5. **Stage A execution**: Send to selected model with self-evaluation prompt
+6. **Confidence parsing**: Extract confidence score from response
+7. **Stage B escalation** (conditional): If confidence < 0.7, re-execute at next tier
+8. **Return**: Final response with routing metadata
 
-3. Set up environment variables:
-```bash
-# Create .env file in the root directory
-OPENAI_API_KEY=your_key_here
-DATABASE_URL=sqlite:///./model_router.db
+### Hard Triggers
 
-# Optional rate limiting configuration
-RATE_LIMIT_PROMPT_MAX_REQUESTS=30
-RATE_LIMIT_STREAM_MAX_REQUESTS=10
-RATE_LIMIT_ANALYZE_MAX_REQUESTS=60
-```
-
-4. Run the backend server:
-```bash
-python -m app.main
-```
-
-The API will be available at `http://localhost:8080`
-
-### Frontend Installation
-
-1. Navigate to client directory:
-```bash
-cd client
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Start development server:
-```bash
-npm run dev
-```
-
-The frontend will be available at `http://localhost:5173`
-
-4. Build for production:
-```bash
-npm run build
-```
-
-**Interactive API Documentation:**
-- Swagger UI: http://localhost:8080/docs
-- ReDoc: http://localhost:8080/redoc
+The system escalates to high-capability tier when detecting:
+- Security terms (SQL injection, XSS, authentication)
+- Medical/health queries
+- Legal or compliance questions
+- Financial analysis
+- Production deployment concerns
 
 ## API Endpoints
 
 ### POST /api/prompt
-Route a prompt to the appropriate LLM model with intelligent selection.
 
 **Request:**
 ```json
 {
   "prompt": "Explain quantum computing in simple terms",
-  "model": "gpt-3.5-turbo",
-  "max_tokens": 1000,
-  "route_mode": "auto"
+  "max_tokens": 1000
 }
 ```
 
@@ -283,31 +198,23 @@ Route a prompt to the appropriate LLM model with intelligent selection.
   "response": "Quantum computing is...",
   "model_used": "gpt-3.5-turbo",
   "tokens_used": 150,
-  "tier": "cheap",
+  "tier": "low-cost",
   "latency_ms": 1250.5,
   "routing": {
-    "initial_tier": "cheap",
-    "final_tier": "cheap",
+    "initial_tier": "low-cost",
+    "final_tier": "low-cost",
     "score": 35,
     "hard_triggers": [],
     "escalated": false,
-    "stage_a_confidence": 0.92,
-    "stage_a_escalate": false
+    "stage_a_confidence": 0.92
   }
 }
 ```
 
 ### POST /api/prompt/stream
-Stream tokens in real-time using Server-Sent Events (SSE).
 
-**Server-Sent Events:**
-- `meta`: Routing and model information
-- `delta`: Incremental text chunks
-- `usage`: Token usage statistics
-- `done`: Final metadata
-- `error`: Error details if failed
+Streams tokens via Server-Sent Events (SSE). Events: `meta`, `delta`, `usage`, `done`, `error`.
 
-**Example:**
 ```bash
 curl -N -X POST http://localhost:8080/api/prompt/stream \
   -H "Content-Type: application/json" \
@@ -315,9 +222,9 @@ curl -N -X POST http://localhost:8080/api/prompt/stream \
 ```
 
 ### POST /api/prompt/raw
-Send raw text without JSON formatting (useful for pasting code).
 
-**Request:**
+Accepts raw text without JSON envelope.
+
 ```bash
 curl -X POST http://localhost:8080/api/prompt/raw \
   -H "Content-Type: text/plain" \
@@ -325,9 +232,9 @@ curl -X POST http://localhost:8080/api/prompt/raw \
 ```
 
 ### POST /api/analyze
-Analyze a prompt without executing it (for debugging routing logic).
 
-**Response:**
+Returns routing analysis without executing the prompt (useful for debugging).
+
 ```json
 {
   "features": {
@@ -337,361 +244,112 @@ Analyze a prompt without executing it (for debugging routing logic).
     "word_count": 25
   },
   "score": 45,
-  "score_breakdown": {
-    "base_score": 30,
-    "code_bonus": 15
-  },
-  "hard_triggers": {
-    "triggered": false,
-    "reasons": []
-  },
   "routing": {
-    "initial_tier": "mid",
-    "initial_model": "gpt-4",
+    "initial_tier": "mid-tier",
     "would_use_self_eval": true
   }
 }
 ```
 
-### GET /api/health
-Health check endpoint.
+## Design Tradeoffs & Limitations
 
-**Response:**
-```json
-{
-  "status": "healthy",
-  "openai_api_key": "configured",
-  "routing_enabled": true
-}
-```
+### Self-Evaluation Reliability
+- **Approach**: Models assess their own confidence via structured prompts
+- **Limitation**: No ground truth validation; confidence scores are model-generated estimates, not calibrated probabilities
+- **Risk**: Over-confident incorrect responses or under-confident correct responses can occur
+- **Mitigation**: Hard triggers bypass self-evaluation for high-stakes domains
+
+### Streaming vs Self-Evaluation
+- **Tradeoff**: Streaming requires buffering the full response to extract confidence scores, negating real-time benefits
+- **Decision**: Streaming endpoint disables self-evaluation to preserve token-by-token delivery
+- **Implication**: Users choose between real-time feedback (streaming) or quality control (standard with escalation)
+
+### Heuristic Scoring vs ML Classifiers
+- **Why heuristics**: Regex + keyword matching is deterministic, debuggable, and requires no training data or model deployment
+- **Limitation**: Brittle; misses nuanced complexity (e.g., "simple" questions requiring deep reasoning)
+- **Alternative not pursued**: Embedding-based classifiers would require labeled data, ongoing retraining, and higher latency
+- **Verdict**: Heuristics sufficient for demonstration; production system would likely need hybrid approach
+
+### Hard Triggers
+- **Limitation**: Keyword-based detection prone to false positives (e.g., "security" in benign context) and false negatives (adversarial phrasing)
+- **Risk**: Over-escalation increases costs; under-escalation risks low-quality responses on critical prompts
+
+### Cost Optimization
+- **Assumption**: Tier pricing differences justify routing overhead
+- **Not measured**: Actual cost savings require production traffic analysis
+- **Blind spot**: Escalation from low-cost to high-capability may cost more than starting at mid-tier
+
+### Scope
+- **Not production-ready**: No authentication, no multi-tenancy, no cost budgeting, no fallback providers
+- **Intended use**: Demonstration of orchestration patterns, not a deployable service
 
 ## Configuration
 
-### Environment Variables
-
-Create a `.env` file in the root directory with the following variables:
-
+Environment variables (`.env` file):
 ```bash
-# Required
-OPENAI_API_KEY=your_openai_api_key_here
-
-# Optional - Database
-DATABASE_URL=sqlite:///./model_router.db
-
-# Optional - Rate Limiting (requests per minute)
-RATE_LIMIT_PROMPT_MAX_REQUESTS=30      # Standard prompt endpoint
-RATE_LIMIT_STREAM_MAX_REQUESTS=10      # Streaming endpoint
-RATE_LIMIT_ANALYZE_MAX_REQUESTS=60     # Analysis endpoint
-
-# Optional - Server Configuration
-HOST=0.0.0.0
-PORT=8080
+OPENAI_API_KEY=your_key_here
+DATABASE_URL=sqlite:///./model_router.db  # Optional
+RATE_LIMIT_PROMPT_MAX_REQUESTS=30          # Optional
 ```
 
-### Rate Limiting
+Rate limiting: Per-IP, configurable per endpoint (default: 30/min standard, 10/min streaming).
 
-The application includes per-IP rate limiting to prevent abuse:
-
-- **Standard Prompts**: 30 requests/minute (default)
-- **Streaming**: 10 requests/minute (default)
-- **Analysis**: 60 requests/minute (default)
-
-Rate limits can be adjusted via environment variables or disabled by setting values to very high numbers.
-
-### Input Constraints
-
-- **Maximum prompt length**: 50,000 characters (configurable)
-- **Maximum tokens per response**: 4,000 (configurable)
-- **Supported content**: Plain text, code snippets, markdown
-
-## Model Tiers and Routing
-
-### Tier Definitions
-
-#### Cheap Tier (Score: 0-40)
-- **Model**: gpt-3.5-turbo
-- **Cost**: $0.0005/1K input, $0.0015/1K output
-- **Use for**: Simple questions, basic information, straightforward tasks
-- **Self-evaluation**: Enabled (can escalate if uncertain)
-
-#### Mid Tier (Score: 41-70)
-- **Model**: gpt-4
-- **Cost**: $0.03/1K input, $0.06/1K output
-- **Use for**: Complex analysis, comparisons, multi-step reasoning
-- **Self-evaluation**: Enabled (can escalate if uncertain)
-
-#### Best Tier (Score: 71-100)
-- **Model**: gpt-4-turbo
-- **Cost**: $0.01/1K input, $0.03/1K output
-- **Use for**: Expert-level tasks, technical implementation, critical decisions
-- **Self-evaluation**: Disabled (already best model)
-
-### Routing Logic
-
-1. **Feature Extraction**: Analyze prompt for code, complexity, stakes
-2. **Score Calculation**: Compute weighted score (0-100)
-3. **Hard Triggers**: Check for high-stakes keywords (security, medical, legal)
-4. **Tier Selection**: Choose model based on score and triggers
-5. **Execution**: Send to selected model with self-evaluation
-6. **Escalation**: If confidence low, retry with better model
-
-### Hard Triggers (Automatic Escalation to Best)
-
-The system automatically escalates to the best model when detecting:
-- Security-related prompts (SQL injection, XSS, authentication)
-- Medical/health-related queries
-- Legal advice or compliance questions
-- Financial analysis or risk assessment
-- Production deployment or infrastructure
-- Data privacy concerns
-
-## Self-Evaluation and Escalation
-
-The system uses a two-stage approach for optimal cost/quality balance:
-
-### Stage A: Initial Response with Self-Evaluation
-1. Route prompt to initial model (cheap or mid tier)
-2. Request includes self-evaluation instructions
-3. Model evaluates its own confidence (0.0-1.0)
-4. Model recommends escalation if uncertain
-
-### Stage B: Escalation (if needed)
-1. Parse self-evaluation from Stage A response
-2. If confidence < threshold or escalation recommended
-3. Re-run prompt with next higher tier model
-4. Return Stage B response to user
-
-### Benefits
-- **Cost Optimization**: Only use expensive models when needed
-- **Quality Assurance**: Detect and fix low-confidence responses
-- **Transparency**: Routing metadata shows escalation decisions
-- **No User Intervention**: Fully automatic quality control
-
-### Streaming Mode
-Note: Streaming responses bypass self-evaluation since they require buffering the full response. Use standard endpoints for self-evaluation features.
+Input constraints: 50k character max prompt length (configurable).
 
 ## Project Structure
 
 ```
 model-router-ai/
-├── app/                          # Backend FastAPI application
-│   ├── models/                   # Database models
-│   │   └── database.py          # SQLAlchemy models & setup
-│   ├── routers/                 # API routes
-│   │   ├── api.py              # Main API endpoints
-│   │   └── schemas.py          # Pydantic request/response models
-│   ├── services/                # Business logic
-│   │   ├── model_router.py     # Core routing logic
-│   │   ├── routing_executor.py # Multi-stage execution
-│   │   ├── prompt_features.py  # Feature extraction
-│   │   ├── rate_limiter.py     # Rate limiting
-│   │   ├── input_sanitizer.py  # Input validation
-│   │   └── request_logger.py   # Request logging
-│   └── main.py                  # FastAPI app initialization
-├── client/                       # Frontend React application
-│   ├── src/
-│   │   ├── components/          # React components
-│   │   │   ├── CircularText.jsx
-│   │   │   ├── GlassSurface.jsx
-│   │   │   ├── Grainient.jsx   # Gradient background
-│   │   │   └── TextType.jsx
-│   │   ├── pages/               # Page components
-│   │   │   ├── Homepage.jsx    # Landing page
-│   │   │   ├── LoadingScreen.jsx
-│   │   │   └── Resultpage.jsx  # Results display
-│   │   ├── routes/              # Routing configuration
-│   │   ├── App.jsx              # Main app component
-│   │   └── main.jsx             # Entry point
-│   ├── package.json             # Frontend dependencies
-│   ├── vite.config.js           # Vite configuration
-│   └── vercel.json              # Vercel deployment config
-├── server/                       # Server utilities
-│   ├── demo.py                  # Demo script
-│   ├── test_api.sh             # API testing script
-│   └── tests/                   # Backend tests
-├── requirements.txt             # Python dependencies
-├── README.md                    # This file
-├── QUICKSTART.md               # Quick start guide
-├── USAGE.md                    # Usage examples
-└── IMPLEMENTATION_SUMMARY.md   # Technical details
+├── app/
+│   ├── models/database.py          # SQLAlchemy models
+│   ├── routers/
+│   │   ├── api.py                  # API endpoints
+│   │   └── schemas.py              # Pydantic models
+│   ├── services/
+│   │   ├── model_router.py         # Routing logic
+│   │   ├── routing_executor.py     # Multi-stage execution
+│   │   ├── prompt_features.py      # Feature extraction
+│   │   ├── rate_limiter.py         # Rate limiting
+│   │   ├── input_sanitizer.py      # Input validation
+│   │   └── request_logger.py       # Request logging
+│   └── main.py
+├── client/                          # React frontend
+├── server/
+│   ├── demo.py                      # Demo script (no API key needed)
+│   └── tests/                       # Pytest tests
+└── requirements.txt
 ```
 
-## Development
+## Testing
 
-### Backend Development
-
-Run tests:
+Backend:
 ```bash
 pytest server/tests/ -v
+python server/demo.py  # Run demo
 ```
 
-Run with auto-reload:
+API:
 ```bash
-uvicorn app.main:app --reload --port 8080
-```
-
-Run demo script:
-```bash
-python server/demo.py
-```
-
-### Frontend Development
-
-Start development server with hot reload:
-```bash
-cd client
-npm run dev
-```
-
-Lint code:
-```bash
-npm run lint
-```
-
-Build for production:
-```bash
-npm run build
-npm run preview
-```
-
-### Testing the API
-
-Manual testing with curl:
-```bash
-# Health check
 curl http://localhost:8080/api/health
-
-# Send a prompt
 curl -X POST http://localhost:8080/api/prompt \
   -H "Content-Type: application/json" \
-  -d '{"prompt": "What is Python?", "max_tokens": 100}'
-
-# Analyze without executing
-curl -X POST http://localhost:8080/api/analyze \
-  -H "Content-Type: application/json" \
-  -d '{"prompt": "Write a secure authentication function"}'
+  -d '{"prompt": "What is Python?"}'
 ```
 
-Or use the provided test script:
-```bash
-bash server/test_api.sh
-```
+Interactive docs: `http://localhost:8080/docs`
 
-## Deployment
+## What This Demonstrates
 
-### Frontend (Vercel)
-The frontend is configured for Vercel deployment with the included `vercel.json`:
+- **Cost-aware orchestration**: Tiered model selection based on prompt analysis
+- **Failure handling**: Self-evaluation and automatic escalation
+- **System decomposition**: Cleanly separated routing, execution, and infrastructure concerns
+- **Tradeoff awareness**: Explicit documentation of limitations and design choices
 
-```bash
-cd client
-npm run build
-# Deploy to Vercel
-vercel --prod
-```
+## What This Is Not
 
-### Backend (Any Platform)
-The backend can be deployed to any platform supporting Python (Railway, Render, Fly.io, etc.):
-
-```bash
-# Ensure dependencies are installed
-pip install -r requirements.txt
-
-# Run with production server
-python -m app.main
-```
-
-Environment variables needed:
-- `OPENAI_API_KEY`: Your OpenAI API key
-- `DATABASE_URL`: Database connection string (optional, defaults to SQLite)
-
-## Key Features Implemented
-
-### ✅ Intelligent Routing
-- Feature-based prompt analysis
-- Multi-tier model selection (cheap/mid/best)
-- Hard trigger detection for critical prompts
-- Weighted scoring system (0-100)
-
-### ✅ Self-Evaluation System
-- Models assess their own confidence
-- Automatic escalation when uncertain
-- Two-stage execution pipeline
-- Cost-optimized quality control
-
-### ✅ Streaming Support
-- Real-time token streaming via SSE
-- Progressive response display
-- Usage statistics during streaming
-- Error handling in streams
-
-### ✅ Security & Validation
-- Input sanitization
-- Rate limiting per IP
-- Control character filtering
-- Prompt length validation
-
-### ✅ Developer Experience
-- Comprehensive API documentation
-- Multiple request formats (JSON, raw text)
-- Analysis endpoint for debugging
-- Interactive Swagger UI
-- Health check endpoint
-
-### ✅ Modern Frontend
-- React 19 with animations
-- Real-time result display
-- Beautiful glass morphism design
-- Responsive layout
-
-## Future Enhancements
-
-Here are some ideas for future development:
-
-### Core Functionality
-- **Response caching**: Cache common queries to reduce API costs and latency
-- **Multi-turn conversations**: Support for maintaining conversation context across multiple requests
-- **Custom difficulty scoring**: Allow users to define their own difficulty estimation logic
-- **Batch processing API**: Submit multiple prompts and process them efficiently
-
-### Intelligence & Performance
-- **ML-based difficulty estimation**: Use embeddings or a lightweight classifier model for better accuracy
-- **A/B testing framework**: Compare different models on same prompts to optimize routing decisions
-- **Learning from feedback**: Track user satisfaction and adjust routing based on historical performance
-- **Advanced caching strategies**: Redis-based caching for distributed deployments
-
-### Monitoring & Operations
-- **Prometheus metrics**: Export metrics for monitoring with Grafana dashboards
-- **Detailed logging**: Structured logging with filtering and search capabilities
-- **Alert system**: Email/Slack notifications for budget thresholds and failures
-- **Cost analytics dashboard**: Real-time dashboard showing latency, success rates, and model usage
-
-### Integration & APIs
-- **Webhook support**: POST results to external URLs for async workflows
-- **SDK/client libraries**: Python, JavaScript, and Go client libraries
-- **CLI tool**: Command-line interface for quick testing and automation
-- **LangChain integration**: Enable use as a router in popular LLM frameworks
-
-### Security & Reliability
-- **Redis-based rate limiting**: Distributed rate limiting for multi-instance deployments
-- **API key management**: Multi-user support with per-key quotas and permissions
-- **Circuit breaker pattern**: Prevent cascading failures with smart request throttling
-- **Fallback models**: Automatic fallback to alternative providers if primary fails
-
-### Cost Management
-- **Budget tracking**: Track spending against configurable limits
-- **Dynamic budgeting**: Different budgets per user, team, or project
-- **Cost prediction**: Estimate costs before making requests
-- **Usage quotas**: Token-based limits per user or time period
-
-### Testing & Quality
-- **Integration tests**: Full end-to-end tests with mock API responses
-- **Performance benchmarks**: Automated benchmarking of routing decisions
-- **Load testing**: Test system performance under high load
-
-### Deployment
-- **Docker support**: Containerized deployment with docker-compose
-- **Kubernetes charts**: Helm charts for K8s deployment
-- **Multi-region support**: Deploy across multiple regions for lower latency
+- Not production-ready (no auth, no multi-tenancy, no cost budgeting, no provider fallbacks)
+- Not a deployed service (demonstration code)
+- Not claiming optimal routing (heuristics are brittle, cost savings unmeasured)
 
 ## License
 
