@@ -11,6 +11,13 @@ An exploration of cost-aware LLM orchestration, multi-stage routing, and escalat
 - **Scope**: Demonstration of orchestration patterns; not production-grade, but architecturally coherent
 - **Value**: Shows understanding of cost-quality tradeoffs, failure handling, and system decomposition in LLM systems
 
+## What This Demonstrates
+
+- **Cost-aware orchestration**: Tiered model selection based on prompt analysis
+- **Failure handling**: Self-evaluation and automatic escalation
+- **System decomposition**: Cleanly separated routing, execution, and infrastructure concerns
+- **Tradeoff awareness**: Explicit documentation of limitations and design choices
+
 ## Features
 
 ### Backend (FastAPI + Python)
@@ -340,13 +347,6 @@ curl -X POST http://localhost:8080/api/prompt \
 ```
 
 Interactive docs: `http://localhost:8080/docs`
-
-## What This Demonstrates
-
-- **Cost-aware orchestration**: Tiered model selection based on prompt analysis
-- **Failure handling**: Self-evaluation and automatic escalation
-- **System decomposition**: Cleanly separated routing, execution, and infrastructure concerns
-- **Tradeoff awareness**: Explicit documentation of limitations and design choices
 
 ## What This Is Not
 
