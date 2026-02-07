@@ -21,12 +21,6 @@
       "category": "public.app-category.developer-tools"
     },
     "dmg": {
-      "background": null,
-      "iconSize": 128,
-      "window": {
-        "width": 540,
-        "height": 380
-      },
       "contents": [
         {
           "x": 130,

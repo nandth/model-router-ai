@@ -1,0 +1,63 @@
+name: Build Electron App
+
+on:
+  push:
+    tags:
+      - "v*.*.*" # Run on version tags like v1.0.0
+
+jobs:
+  build-macos:
+    name: Build macOS DMG
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Build Electron DMG
+        run: npx electron-builder --mac --publish never
+
+      - name: Upload DMG artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: mac-dmg
+          path: dist/mac/*.dmg
+
+  build-windows:
+    name: Build Windows EXE
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Build Electron EXE
+        run: npx electron-builder --win --publish never
+
+      - name: Upload EXE artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-exe
+          path: dist/win-unpacked/*.exe
