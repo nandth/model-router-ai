@@ -14,7 +14,10 @@ function AppRoutes({ setRenderResultPage }) {
         path="/chat"
         element={<Resultpage setRenderResultPage={setRenderResultPage} />}
       />
-      <Route path="/analytics" element={<Analyticspage />} />
+      <Route
+        path="/analytics"
+        element={<Analyticspage />}
+      />
     </Routes>
   );
 }
