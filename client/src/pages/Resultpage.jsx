@@ -30,10 +30,23 @@ function Resultpage() {
 
       const response = await res.json();
       setData(response);
+      saveAnalytics(response); 
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const saveAnalytics = (data) => {
+    try {
+      const existing = JSON.parse(localStorage.getItem("analyticsHistory") || "[]");
+      // Add timestamp just in case we need it later
+      const entry = { ...data, timestamp: new Date().toISOString() };
+      existing.push(entry);
+      localStorage.setItem("analyticsHistory", JSON.stringify(existing));
+    } catch (e) {
+      console.error("Failed to save analytics", e);
     }
   };
 
@@ -151,6 +164,7 @@ function Resultpage() {
 
       const response = await res.json();
       setData(response);
+      saveAnalytics(response);
     } catch (err) {
       console.error(err);
     } finally {
