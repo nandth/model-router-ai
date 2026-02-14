@@ -100,14 +100,16 @@ function StatCard({ title, value, highlight = false }) {
       width="100%"
       height={140}
       borderRadius={24}
-      className={`flex flex-row justify-between items-center px-10 transition-transform hover:scale-[1.02] ${highlight ? 'border-[#569cd6]' : ''}`}
+      className={`transition-transform hover:scale-[1.02] ${highlight ? 'border-[#569cd6]' : ''}`}
     >
-      <h3 className="text-[#888888] text-sm uppercase tracking-widest font-medium text-left">
-        {title}
-      </h3>
-      <p className="text-[#C7C7C7] text-3xl md:text-4xl font-bold text-right">
-        {value}
-      </p>
+      <div className="w-full h-full flex flex-row justify-between items-center px-8">
+        <h3 className="text-[#888888] text-sm uppercase tracking-widest font-medium text-left">
+          {title}
+        </h3>
+        <p className="text-[#C7C7C7] text-3xl md:text-4xl font-bold text-right">
+          {value}
+        </p>
+      </div>
     </GlassSurface>
   );
 }
