@@ -30,7 +30,7 @@ function Resultpage() {
 
       const response = await res.json();
       setData(response);
-      saveAnalytics(response); 
+      saveAnalytics(response, inputText); 
     } catch (err) {
       console.error(err);
     } finally {
@@ -38,11 +38,29 @@ function Resultpage() {
     }
   };
 
-  const saveAnalytics = (data) => {
+   const saveAnalytics = (data, currentPrompt) => {
     try {
       const existing = JSON.parse(localStorage.getItem("analyticsHistory") || "[]");
-      // Add timestamp just in case we need it later
-      const entry = { ...data, timestamp: new Date().toISOString() };
+      
+      //CHECK FOR DUPLICATES:
+      //If the last entry has the exact same prompt AND was made < 2 seconds ago skip it
+      if (existing.length > 0) {
+        const lastEntry = existing[existing.length - 1];
+        const timeDiff = new Date() - new Date(lastEntry.timestamp);
+        
+        // If same prompt and less than 2000ms (2 seconds) diff
+        if (lastEntry.prompt === currentPrompt && timeDiff < 2000) {
+            return; 
+        }
+      }
+
+      //Add the prompt to the saved data for better tracking
+      const entry = { 
+        ...data, 
+        prompt: currentPrompt, 
+        timestamp: new Date().toISOString() 
+      };
+      
       existing.push(entry);
       localStorage.setItem("analyticsHistory", JSON.stringify(existing));
     } catch (e) {
@@ -164,7 +182,7 @@ function Resultpage() {
 
       const response = await res.json();
       setData(response);
-      saveAnalytics(response);
+      saveAnalytics(response, inputText);
     } catch (err) {
       console.error(err);
     } finally {
@@ -187,35 +205,6 @@ function Resultpage() {
 
   return (
     <div className="w-full h-full flex justify-around">
-      <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-50">
-        <GlassSurface
-          width={50}
-          height={50}
-          borderRadius={24}
-          displace={0}
-          distortionScale={0}
-        >
-          <button className="aspect-square w-12.5 rounded-full flex justify-center items-center">
-            <Link to={"/"}>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#c7c7c7"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="lucide lucide-house-icon lucide-house"
-              >
-                <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" />
-                <path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-              </svg>
-            </Link>
-          </button>
-        </GlassSurface>
-      </nav>
       <div className="min-w-[50%] relative z-10 flex flex-col justify-center items-center gap-12.5">
         <div className="flex flex-col justify-around items-center gap-3.5">
           <SplitText
