@@ -20,19 +20,22 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
+        working-directory: client
         run: npm ci
 
       - name: Build frontend
+        working-directory: client
         run: npm run build
 
       - name: Build Electron DMG
+        working-directory: client
         run: npx electron-builder --mac --publish never
 
       - name: Upload DMG artifact
         uses: actions/upload-artifact@v4
         with:
           name: mac-dmg
-          path: dist/mac/*.dmg
+          path: client/dist/mac/*.dmg
 
   build-windows:
     name: Build Windows EXE
@@ -48,16 +51,19 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
+        working-directory: client
         run: npm ci
 
       - name: Build frontend
+        working-directory: client
         run: npm run build
 
       - name: Build Electron EXE
+        working-directory: client
         run: npx electron-builder --win --publish never
 
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
         with:
           name: windows-exe
-          path: dist/win-unpacked/*.exe
+          path: client/dist/win-unpacked/*.exe
