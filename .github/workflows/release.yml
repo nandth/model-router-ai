@@ -35,7 +35,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: mac-dmg
-          path: client/dist/mac/*.dmg
+          path: client/dist/*.dmg
 
   build-windows:
     name: Build Windows EXE
