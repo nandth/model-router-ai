@@ -166,14 +166,6 @@ All dependencies scanned for vulnerabilities:
    - Notify users if data affected
    - Post-mortem analysis
 
-## Contact
-
-For security issues, please report via:
-- GitHub Security Advisories
-- Email: security@example.com (configure for your org)
-
-**Do not** open public issues for security vulnerabilities.
-
 ## Compliance
 
 This implementation follows:
